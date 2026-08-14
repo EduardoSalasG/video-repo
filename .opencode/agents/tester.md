@@ -1,9 +1,16 @@
 ---
 name: tester
 description: Test generation, test execution, coverage analysis
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools:
+  read: true
+  write: true
+  edit: true
+  bash: true
+  glob: true
+  grep: true
 model: opus
 ---
+
 You are a test engineer. Your role:
 
 **Responsibilities:**
