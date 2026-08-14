@@ -1,0 +1,171 @@
+import { Request, Response, NextFunction } from 'express';
+import prisma from '../config/database';
+import { registerSchema, loginSchema, magicLoginSchema } from '../validators/authValidators';
+import { hashPassword, verifyPassword } from '../utils/password';
+import { generateToken, verifyToken } from '../utils/token';
+import { z } from 'zod';
+import { randomUUID } from 'crypto';
+import { User } from '../types';
+
+/**
+ * Register a new user
+ */
+export async function register(req: Request, res: Response): Promise<void> {
+  try {
+    // Validate request body
+    const parsedBody = registerSchema.parse(req.body);
+
+    // Check if user already exists by email or username
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: parsedBody.email },
+          { username: parsedBody.username },
+        ],
+      },
+    });
+
+    if (existingUser) {
+      res.status(409).json({ error: 'User with this email or username already exists' });
+      return;
+    }
+
+    // Hash password
+    const passwordHash = await hashPassword(parsedBody.password);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email: parsedBody.email,
+        username: parsedBody.username,
+        firstName: parsedBody.firstName,
+        lastName: parsedBody.lastName,
+        passwordHash,
+        role: parsedBody.role || 'STUDENT',
+      },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-for-development-only';
+    const accessToken = generateToken({ userId: user.id }, jwtSecret, '1h');
+
+    // Return response
+    res.status(201).json({
+      accessToken,
+      user,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+/**
+ * Login user
+ */
+export async function login(req: Request, res: Response): Promise<void> {
+  try {
+    // Validate request body
+    const parsedBody = loginSchema.parse(req.body);
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: parsedBody.email },
+    });
+
+    if (!user) {
+      // Return generic error to avoid leaking whether the email exists
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    // Verify password
+    const isValidPassword = await verifyPassword(parsedBody.password, user.passwordHash);
+    if (!isValidPassword) {
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-for-development-only';
+    const accessToken = generateToken({ userId: user.id }, jwtSecret, '1h');
+
+    // Return response (without passwordHash)
+    const { passwordHash, ...userWithoutPassword } = user;
+    res.json({
+      accessToken,
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+/**
+ * Magic link authentication - send magic link to email
+ */
+export async function magicLink(req: Request, res: Response): Promise<void> {
+  try {
+    // Validate request body
+    const parsedBody = magicLoginSchema.parse(req.body);
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: parsedBody.email },
+    });
+
+    // For security, we always return the same message regardless of whether the user exists
+    // to prevent email enumeration.
+    if (!user) {
+      res.json({ message: 'If the email exists, a magic link has been sent.' });
+      return;
+    }
+
+    // Generate a magic link token
+    const token = randomUUID();
+
+    // Set expiration to 1 hour from now
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    // Create session record
+    await prisma.session.create({
+      data: {
+        token,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // In a real application, we would send an email with a link like:
+    // `https://yourapp.com/auth/verify-magic-link?token=${token}`
+    // For this exercise, we'll just return a success message.
+    res.json({ message: 'If the email exists, a magic link has been sent.' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.errors });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
