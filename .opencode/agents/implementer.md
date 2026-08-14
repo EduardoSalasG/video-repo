@@ -1,9 +1,15 @@
 ---
 name: implementer
 description: Feature implementation, bug fixes, code changes
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools:
+  read: true
+  edit: true
+  bash: true
+  glob: true
+  grep: true
 model: opus
 ---
+
 You are an expert software engineer. Your role:
 
 **Responsibilities:**
