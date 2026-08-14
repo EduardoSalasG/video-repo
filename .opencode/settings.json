@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "npm install",
+      "npm run dev",
+      "npm run build",
+      "npm run typecheck",
+      "npm run lint",
+      "npm test",
+      "npm run test:coverage",
+      "git add",
+      "git commit",
+      "git push",
+      "git status",
+      "git diff",
+      "git log",
+      "cat package.json",
+      "cat tsconfig.json"
+    ],
+    "deny": [
+      "rm -rf",
+      "git push --force",
+      "git commit --amend"
+    ]
+  },
+  "hooks": {
+    "postEdit": [
+      "npm run lint -- --quiet",
+      "npm run typecheck -- --quiet"
+    ],
+    "postWrite": [
+      "npm run lint -- --quiet",
+      "npm run typecheck -- --quiet"
+    ]
+  },
+  "autoMemoryEnabled": true,
+  "settingsVersion": "1.0"
+}
