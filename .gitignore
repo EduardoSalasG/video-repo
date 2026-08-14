@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+
+# Opencode local settings
+.opencode/settings.local.json
+
+# Memory (local agent state - optional, commit project structure only)
+# memory/agents/*/MEMORY.md
+# memory/project-state/*
+# memory/sessions/*
+
+# Misc
+*.tgz
+.cache/
