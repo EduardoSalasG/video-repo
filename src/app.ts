@@ -4,6 +4,7 @@ import moduleRoutes from './routes/moduleRoutes'
 import sectionRoutes from './routes/sectionRoutes'
 import videoRoutes from './routes/videoRoutes'
 import contentRoutes from './routes/contentRoutes'
+import searchRoutes from './routes/searchRoutes'
 
 const app = express()
 
@@ -18,5 +19,6 @@ app.use('/modules', moduleRoutes)
 app.use('/', sectionRoutes)
 app.use('/', videoRoutes)
 app.use('/', contentRoutes)
+app.use('/', searchRoutes)
 
 export default app
