@@ -9,9 +9,10 @@ import { PrismaPg } from '@prisma/adapter-pg'
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  'postgresql://postgres:admin@localhost:5432/video_repo'
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required')
+}
 
 // Prisma 7 requires a driver adapter to connect to the database
 const adapter = new PrismaPg(connectionString)

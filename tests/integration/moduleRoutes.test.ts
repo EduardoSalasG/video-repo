@@ -1,7 +1,7 @@
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import prisma from '../../src/config/database.ts';
-import app from '../../src/index.ts';
+import app from '../../src/app.ts';
 import { generateToken } from '../../src/utils/token';
 
 // Set JWT_SECRET if not set
