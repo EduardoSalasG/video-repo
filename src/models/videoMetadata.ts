@@ -149,11 +149,17 @@ export async function updateVideoMetadata(
     where: { id },
     data: {
       steps: data.steps as Prisma.InputJsonValue[],
-      difficulty: Prisma.Difficulty[data.difficulty.toUpperCase() as keyof typeof Prisma.Difficulty],
-      primaryStyle: Prisma.PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof Prisma.PrimaryStyle],
+      difficulty: data.difficulty
+        ? Prisma.Difficulty[data.difficulty.toUpperCase() as keyof typeof Prisma.Difficulty]
+        : undefined,
+      primaryStyle: data.primaryStyle
+        ? Prisma.PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof Prisma.PrimaryStyle]
+        : undefined,
       influences: data.influences as Prisma.InputJsonValue[],
       durationCounts: data.durationCounts,
-      videoType: Prisma.VideoType[() as keyof typeof Prisma.VideoType],
+      videoType: data.videoType
+        ? Prisma.VideoType[data.videoType.toUpperCase() as keyof typeof Prisma.VideoType]
+        : undefined,
       tags: data.tags as Prisma.InputJsonValue[],
       fileSize: data.fileSize ?? null,
       durationSeconds: data.durationSeconds ?? null,

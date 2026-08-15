@@ -6,6 +6,7 @@ import {
   updateVideoMetadataSchema,
   videoMetadataQuerySchema,
   videoMetadataIdSchema,
+  videoMetadataSectionIdSchema,
 } from '../validators/videoValidators';
 import {
   findAllVideoMetadata,
@@ -191,7 +192,8 @@ export async function uploadVideoController(
     }
 
     // Extract section ID from route parameters
-    const sectionId = req.params.sectionId as string;
+    const sectionIdParams = videoMetadataSectionIdSchema.parse(req.params);
+    const sectionId = sectionIdParams.sectionId;
 
     // Extract video metadata (duration, file size) using the uploaded file
     const filePath = getVideoFilePath(Array.isArray(req.file.filename) ? req.file.filename[0] : req.file.filename);

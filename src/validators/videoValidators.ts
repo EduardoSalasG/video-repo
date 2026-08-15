@@ -36,3 +36,7 @@ export const videoMetadataQuerySchema = z.object({
 export const videoMetadataIdSchema = z.object({
   id: z.string().min(1, 'Video metadata id is required'),
 })
+
+export const videoMetadataSectionIdSchema = z.object({
+  sectionId: z.string().min(1, 'Section id is required'),
+})
