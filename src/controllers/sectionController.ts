@@ -60,8 +60,13 @@ export async function getSections(req: Request, res: Response): Promise<void> {
  */
 export async function getSectionById(req: Request, res: Response): Promise<void> {
   try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    });
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
     const params = sectionIdSchema.parse(req.params);
-    const section = await findSectionById(params.id);
+    const section = await findSectionById(params.id, moduleIdParams.moduleId);
 
     if (!section) {
       res.status(404).json({ error: 'Section not found' });
@@ -118,10 +123,15 @@ export async function updateSectionController(
   res: Response
 ): Promise<void> {
   try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    });
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
     const params = sectionIdSchema.parse(req.params);
     const parsedBody = updateSectionSchema.parse(req.body);
 
-    const section = await updateSection(params.id, parsedBody);
+    const section = await updateSection(params.id, parsedBody, moduleIdParams.moduleId);
     res.json(section);
   } catch (error) {
     console.error('Validation error in updateSectionController:', error);
@@ -144,8 +154,13 @@ export async function deleteSectionController(
   res: Response
 ): Promise<void> {
   try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    });
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
     const params = sectionIdSchema.parse(req.params);
-    await deleteSection(params.id);
+    await deleteSection(params.id, moduleIdParams.moduleId);
     res.status(204).send();
   } catch (error) {
     console.error('Validation error in deleteSectionController:', error);

@@ -96,9 +96,9 @@ export async function findAllSections(
   }
 }
 
-export async function findSectionById(id: string) {
+export async function findSectionById(id: string, moduleId: string) {
   return prisma.section.findUnique({
-    where: { id },
+    where: { id, moduleId },
   })
 }
 
@@ -115,9 +115,9 @@ export async function createSection(data: CreateSectionInput) {
   })
 }
 
-export async function updateSection(id: string, data: UpdateSectionInput) {
+export async function updateSection(id: string, data: UpdateSectionInput, moduleId: string) {
   return prisma.section.update({
-    where: { id },
+    where: { id, moduleId },
     data: {
       title: data.title,
       description: data.description,
@@ -128,6 +128,6 @@ export async function updateSection(id: string, data: UpdateSectionInput) {
   })
 }
 
-export async function deleteSection(id: string) {
-  return prisma.section.delete({ where: { id } })
+export async function deleteSection(id: string, moduleId: string) {
+  return prisma.section.delete({ where: { id, moduleId } })
 }

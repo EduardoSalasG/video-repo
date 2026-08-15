@@ -101,18 +101,18 @@ describe('section model', () => {
     });
   });
 
-  describe('findSectionById', () => {
-    it('should return a section when found', async () => {
-      (prisma.section.findUnique as jest.Mock).mockResolvedValue(sectionStub);
+describe('findSectionById', () => {
+     it('should return a section when found', async () => {
+       (prisma.section.findUnique as jest.Mock).mockResolvedValue(sectionStub);
 
-      const result = await findSectionById('1');
+       const result = await findSectionById('1', 'module1');
 
-      expect(prisma.section.findUnique).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
-      expect(result).toBe(sectionStub);
-    });
-  });
+       expect(prisma.section.findUnique).toHaveBeenCalledWith({
+         where: { id: '1', moduleId: 'module1' },
+       });
+       expect(result).toBe(sectionStub);
+     });
+   });
 
   describe('createSection', () => {
     it('should create a section with provided data', async () => {
@@ -161,39 +161,39 @@ describe('section model', () => {
     });
   });
 
-  describe('updateSection', () => {
-    it('should update a section by id', async () => {
-      (prisma.section.update as jest.Mock).mockResolvedValue(sectionStub);
+describe('updateSection', () => {
+     it('should update a section by id', async () => {
+       (prisma.section.update as jest.Mock).mockResolvedValue(sectionStub);
 
-      const result = await updateSection('1', {
-        title: 'Updated Section',
-        description: null,
-      });
+       const result = await updateSection('1', {
+         title: 'Updated Section',
+         description: null,
+       }, 'module1');
 
-      expect(prisma.section.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: '1' },
-          data: {
-            title: 'Updated Section',
-            description: null,
-            orderIndex: undefined,
-            videoUrl: undefined,
-            markdownContent: undefined,
-          },
-        })
-      );
-      expect(result).toBe(sectionStub);
-    });
-  });
+       expect(prisma.section.update).toHaveBeenCalledWith(
+         expect.objectContaining({
+           where: { id: '1', moduleId: 'module1' },
+           data: {
+             title: 'Updated Section',
+             description: null,
+             orderIndex: undefined,
+             videoUrl: undefined,
+             markdownContent: undefined,
+           },
+         })
+       );
+       expect(result).toBe(sectionStub);
+     });
+   });
 
-  describe('deleteSection', () => {
-    it('should delete a section by id', async () => {
-      (prisma.section.delete as jest.Mock).mockResolvedValue(sectionStub);
+describe('deleteSection', () => {
+     it('should delete a section by id', async () => {
+       (prisma.section.delete as jest.Mock).mockResolvedValue(sectionStub);
 
-      const result = await deleteSection('1');
+       const result = await deleteSection('1', 'module1');
 
-      expect(prisma.section.delete).toHaveBeenCalledWith({ where: { id: '1' } });
-      expect(result).toBe(sectionStub);
-    });
-  });
+       expect(prisma.section.delete).toHaveBeenCalledWith({ where: { id: '1', moduleId: 'module1' } });
+       expect(result).toBe(sectionStub);
+     });
+   });
 });
