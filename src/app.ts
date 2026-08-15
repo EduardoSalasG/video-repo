@@ -3,6 +3,7 @@ import authRoutes from './routes/authRoutes'
 import moduleRoutes from './routes/moduleRoutes'
 import sectionRoutes from './routes/sectionRoutes'
 import videoRoutes from './routes/videoRoutes'
+import contentRoutes from './routes/contentRoutes'
 
 const app = express()
 
@@ -14,7 +15,8 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/auth', authRoutes)
 app.use('/modules', moduleRoutes)
-app.use('/', sectionRoutes);
-app.use('/', videoRoutes);
+app.use('/', sectionRoutes)
+app.use('/', videoRoutes)
+app.use('/', contentRoutes)
 
 export default app
