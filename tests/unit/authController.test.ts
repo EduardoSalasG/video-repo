@@ -1,12 +1,34 @@
-import { register, login, magicLink } from '../src/controllers/authController';
-import { registerSchema, loginSchema, magicLoginSchema } from '../src/validators/authValidators';
-import { hashPassword, verifyPassword } from '../src/utils/password';
-import { generateToken } from '../src/utils/token';
-import { Role } from '../src/types/enums';
-import { User } from '../src/types';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { register, login, magicLink } from '../../src/controllers/authController';
+import { registerSchema, loginSchema, magicLoginSchema } from '../../src/validators/authValidators';
+import { hashPassword, verifyPassword } from '../../src/utils/password';
+import { Role } from '../../src/types/enums';
+import { User } from '../../src/types';
+import { z } from 'zod';
+
+// Test ZodError properties
+describe('ZodError properties', () => {
+  it('should have errors property', () => {
+    const zodError = new z.ZodError([
+      {
+        code: z.ZodErrorCode.invalid_type,
+        expected: 'string',
+        received: 'undefined',
+        path: [],
+        message: 'Required',
+      }
+    ]);
+    // Log for debugging
+    console.log('zodError:', zodError);
+    console.log('zodError.errors:', zodError.errors);
+    console.log('Object.keys(zodError):', Object.keys(zodError));
+    expect(zodError.errors).toBeDefined();
+    expect(Array.isArray(zodError.errors)).toBe(true);
+  });
+});
 
 // Mock prisma
-vi.mock('../config/database', () => {
+vi.mock('../../src/config/database', () => {
   return {
     default: {
       user: {
@@ -22,7 +44,7 @@ vi.mock('../config/database', () => {
 });
 
 // Mock password utils
-vi.mock('../src/utils/password', () => {
+vi.mock('../../src/utils/password', () => {
   return {
     hashPassword: vi.fn(),
     verifyPassword: vi.fn(),
@@ -30,16 +52,16 @@ vi.mock('../src/utils/password', () => {
 });
 
 // Mock token utils
-vi.mock('../src/utils/token', () => {
+vi.mock('../../src/utils/token', () => {
   return {
     generateToken: vi.fn(),
     verifyToken: vi.fn(),
   };
 });
 
-import prisma from '../config/database';
-import { hashPassword as hashPasswordMock, verifyPassword as verifyPasswordMock } from '../src/utils/password';
-import { generateToken as generateTokenMock } from '../src/utils/token';
+import prisma from '../../src/config/database';
+import { hashPassword as hashPasswordMock, verifyPassword as verifyPasswordMock } from '../../src/utils/password';
+import { generateToken as generateTokenMock } from '../../src/utils/token';
 
 describe('authController', () => {
   let mockReq: any;
@@ -122,9 +144,11 @@ describe('authController', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ message: expect.stringContaining('email') }),
-        ])
+        expect.objectContaining({
+          error: expect.arrayContaining([
+            expect.objectContaining({ message: expect.stringContaining('email') }),
+          ]),
+        })
       );
     });
   });
@@ -207,9 +231,11 @@ describe('authController', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ message: expect.stringContaining('email') }),
-        ])
+        expect.objectContaining({
+          error: expect.arrayContaining([
+            expect.objectContaining({ message: expect.stringContaining('email') }),
+          ]),
+        })
       );
     });
   });
@@ -243,9 +269,11 @@ describe('authController', () => {
       });
       expect(prisma.session.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: existingUser.id,
-          token: expect.any(String),
-          expiresAt: expect.any(Date),
+          data: expect.objectContaining({
+            userId: existingUser.id,
+            token: expect.any(String),
+            expiresAt: expect.any(Date),
+          }),
         })
       );
     });
@@ -256,11 +284,10 @@ describe('authController', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       await magicLink(mockReq, mockRes);
-
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'If the email exists, a magic link has been sent.',
-      });
-      expect(prisma.session.create).not.toHaveBeenCalled();
+       expect(mockRes.json).toHaveBeenCalledWith({
+         message: 'If the email exists, a magic link has been sent.',
+       });
+       expect(prisma.session.create).not.toHaveBeenCalled();
     });
 
     it('should return 400 if validation fails', async () => {
@@ -270,9 +297,11 @@ describe('authController', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ message: expect.stringContaining('email') }),
-        ])
+        expect.objectContaining({
+          error: expect.arrayContaining([
+            expect.objectContaining({ message: expect.stringContaining('email') }),
+          ]),
+        })
       );
     });
   });
