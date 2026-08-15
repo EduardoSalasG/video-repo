@@ -1,20 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  getVideoMetadata,
-  getVideoMetadataById,
-  getVideoMetadataBySectionId,
-  createVideoMetadataController,
-  updateVideoMetadataController,
-  deleteVideoMetadataController,
-} from '../../src/controllers/videoController';
-import {
-  findAllVideoMetadata,
-  findVideoMetadataById,
-  findVideoMetadataBySectionId,
-  createVideoMetadata,
-  updateVideoMetadata,
-  deleteVideoMetadata,
-} from '../../src/models/videoMetadata';
 
 // Mock the videoMetadata model
 vi.mock('../../src/models/videoMetadata', () => {
@@ -28,6 +12,38 @@ vi.mock('../../src/models/videoMetadata', () => {
   };
 });
 
+// Mock videoProcessor
+vi.mock('../../src/utils/videoProcessor', () => ({
+  extractVideoMetadata: vi.fn(),
+  getFileSize: vi.fn()
+}));
+
+// Mock storage
+vi.mock('../../src/utils/storage', () => ({
+  uploadVideo: vi.fn(),
+  getVideoFilePath: vi.fn(),
+  getVideoFileUrl: vi.fn()
+}));
+
+import {
+  getVideoMetadata,
+  getVideoMetadataById,
+  getVideoMetadataBySectionId,
+  createVideoMetadataController,
+  updateVideoMetadataController,
+  deleteVideoMetadataController,
+  uploadVideoController,
+} from '../../src/controllers/videoController';
+import {
+  findAllVideoMetadata,
+  findVideoMetadataById,
+  findVideoMetadataBySectionId,
+  createVideoMetadata,
+  updateVideoMetadata,
+  deleteVideoMetadata,
+} from '../../src/models/videoMetadata';
+
+// Mock the videoMetadata model functions
 import {
   findAllVideoMetadata as findAllVideoMetadataMock,
   findVideoMetadataById as findVideoMetadataByIdMock,
@@ -36,6 +52,19 @@ import {
   updateVideoMetadata as updateVideoMetadataMock,
   deleteVideoMetadata as deleteVideoMetadataMock,
 } from '../../src/models/videoMetadata';
+
+// Mock videoProcessor functions
+import {
+  extractVideoMetadata as extractVideoMetadataMock,
+  getFileSize as getFileSizeMock
+} from '../../src/utils/videoProcessor';
+
+// Mock storage functions
+import {
+  uploadVideo as uploadVideoMock,
+  getVideoFilePath as getVideoFilePathMock,
+  getVideoFileUrl as getVideoFileUrlMock
+} from '../../src/utils/storage';
 
 describe('videoController', () => {
   let mockReq: any;
@@ -59,12 +88,12 @@ describe('videoController', () => {
   };
 
   beforeEach(() => {
-    mockReq = { body: {}, params: {}, query: {} };
+    mockReq = { body: {}, params: {}, query: {}, file: null };
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
       send: vi.fn().mockReturnThis(),
-    };
+    };;
     vi.clearAllMocks();
   });
 
@@ -83,7 +112,7 @@ describe('videoController', () => {
         videoMetadata: [videoMetadataStub],
         pagination: { page: 1, limit: 10, total: 1, pages: 1 },
       });
-    });
+      });
 
     it('should return 400 if query validation fails', async () => {
       mockReq.query = { page: '-1' };
@@ -91,22 +120,139 @@ describe('videoController', () => {
       await getVideoMetadata(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
+
       expect(mockRes.json).toHaveBeenCalledWith(
+
         expect.objectContaining({ error: expect.any(Array) })
+
       );
-    });
   });
 
+
+
   describe('getVideoMetadataById', () => {
+
+    let mockReq: any;
+
+    let mockRes: any;
+
+
+
+    const videoMetadataStub = {
+
+      id: 'vm1',
+
+      sectionId: 's1',
+
+      steps: [{ step: 'basic step', count: 4 }],
+
+      difficulty: 'BEGINNER',
+
+      primaryStyle: 'MAMBO_ON2',
+
+      influences: ['afro-cuban'],
+
+      durationCounts: 8,
+
+      videoType: 'STEP_BREAKDOWN',
+
+      tags: ['beginner', 'steps'],
+
+      fileSize: 1024000,
+
+      durationSeconds: 120,
+
+      filename: 'video1.mp4',
+
+      createdAt: new Date(),
+
+      updatedAt: new Date(),
+
+    };
+
+
+
+    beforeEach(() => {
+
+      mockReq = { body: {}, params: {}, query: {} };
+
+      mockRes = {
+
+        status: vi.fn().mockReturnThis(),
+
+        json: vi.fn().mockReturnThis(),
+
+        send: vi.fn().mockReturnThis(),
+
+      };
+
+      vi.clearAllMocks();
+
+    });
+
+
+
     it('should return video metadata when found', async () => {
+
       (findVideoMetadataByIdMock as jest.Mock).mockResolvedValue(videoMetadataStub);
+
       mockReq.params = { id: 'vm1' };
+
+
 
       await getVideoMetadataById(mockReq, mockRes);
 
+
+
       expect(findVideoMetadataByIdMock).toHaveBeenCalledWith('vm1');
+
       expect(mockRes.json).toHaveBeenCalledWith(videoMetadataStub);
+
     });
+
+
+
+    it('should return 404 when video metadata is not found', async () => {
+
+      (findVideoMetadataByIdMock as jest.Mock).mockResolvedValue(null);
+
+      mockReq.params = { id: 'vm1' };
+
+
+
+      await getVideoMetadataById(mockReq, mockRes);
+
+
+
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Video metadata not found' });
+
+    });
+
+
+
+    it('should return 400 if id param is missing', async () => {
+
+      mockReq.params = {};
+
+
+
+      await getVideoMetadataById(mockReq, mockRes);
+
+
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+
+      expect(mockRes.json).toHaveBeenCalledWith(
+
+        expect.objectContaining({ error: expect.any(Array) })
+
+      );
+
+    });
+
+  });
 
     it('should return 404 when video metadata is not found', async () => {
       (findVideoMetadataByIdMock as jest.Mock).mockResolvedValue(null);
@@ -126,9 +272,9 @@ describe('videoController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
-  });
+      });
+    };
+  }};
 
   describe('getVideoMetadataBySectionId', () => {
     it('should return video metadata when found', async () => {
@@ -139,7 +285,7 @@ describe('videoController', () => {
 
       expect(findVideoMetadataBySectionIdMock).toHaveBeenCalledWith('s1');
       expect(mockRes.json).toHaveBeenCalledWith(videoMetadataStub);
-    });
+    };);
 
     it('should return 404 when video metadata is not found for section', async () => {
       (findVideoMetadataBySectionIdMock as jest.Mock).mockResolvedValue(null);
@@ -149,7 +295,7 @@ describe('videoController', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Video metadata not found for this section' });
-    });
+    };);
 
     it('should return 400 if id param is missing', async () => {
       mockReq.params = {};
@@ -159,8 +305,8 @@ describe('videoController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
+      };);
+    };);
   });
 
   describe('createVideoMetadataController', () => {
@@ -179,7 +325,7 @@ describe('videoController', () => {
         fileSize: 1024000,
         durationSeconds: 120,
         filename: 'video1.mp4',
-      };
+      };);;
 
       await createVideoMetadataController(mockReq, mockRes);
 
@@ -195,10 +341,10 @@ describe('videoController', () => {
         fileSize: 1024000,
         durationSeconds: 120,
         filename: 'video1.mp4',
-      });
+      };);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith(videoMetadataStub);
-    });
+    };);
 
     it('should return 400 if body validation fails', async () => {
       mockReq.params = {};
@@ -209,8 +355,8 @@ describe('videoController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
+      };);
+    };);
   });
 
   describe('updateVideoMetadataController', () => {
@@ -224,7 +370,7 @@ describe('videoController', () => {
 
       expect(updateVideoMetadataMock).toHaveBeenCalledWith('vm1', { steps: [{ step: 'updated', count: 6 }] });
       expect(mockRes.json).toHaveBeenCalledWith(updated);
-    });
+    };);
 
     it('should return 404 when video metadata is not found', async () => {
       (updateVideoMetadataMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
@@ -235,7 +381,7 @@ describe('videoController', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Video metadata not found' });
-    });
+    };);
 
     it('should return 400 if body validation fails', async () => {
       mockReq.params = { id: 'vm1' };
@@ -246,8 +392,8 @@ describe('videoController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
+      };);
+    };);
 
     it('should return 400 if id param is missing', async () => {
       mockReq.params = {};
@@ -258,8 +404,8 @@ describe('videoController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
+      };);
+    };);
   });
 
   describe('deleteVideoMetadataController', () => {
@@ -272,7 +418,7 @@ describe('videoController', () => {
       expect(deleteVideoMetadataMock).toHaveBeenCalledWith('vm1');
       expect(mockRes.status).toHaveBeenCalledWith(204);
       expect(mockRes.send).toHaveBeenCalled();
-    });
+    };);
 
     it('should return 404 when video metadata is not found', async () => {
       (deleteVideoMetadataMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
@@ -282,7 +428,7 @@ describe('videoController', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Video metadata not found' });
-    });
+    };);
 
     it('should return 400 if id param is missing', async () => {
       mockReq.params = {};
@@ -292,7 +438,115 @@ describe('videoController', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
+      };);
+    };
+  });
+
+  describe('uploadVideoController', () => {
+    it('should upload video and return 201', async () => {
+      // Mock dependencies
+      (extractVideoMetadataMock as jest.Mock).mockResolvedValue({
+        duration: 120,
+        size: 1024000,
+        format: 'mp4',
+        bitrate: 1000
+      };);
+      (getVideoFilePathMock as jest.Mock).mockImplementation((filename) => 
+        `/uploads/videos/${filename}`);
+      
+      (createVideoMetadataMock as jest.Mock).mockResolvedValue(videoMetadataStub);
+      
+      // Mock the uploaded file
+      mockReq.params = { sectionId: 's1' };
+      mockReq.file = {
+        filename: 'video1.mp4',
+        originalname: 'myvideo.mp4',
+        mimetype: 'video/mp4',
+        size: 1024000,
+        destination: '/uploads/videos',
+        path: '/uploads/videos/video1.mp4',
+        buffer: Buffer.from([])
+      };); as Express.Multer.File;
+
+      await uploadVideoController(mockReq, mockRes);
+
+      // Verify extractVideoMetadata was called with correct path
+      expect(getVideoFilePathMock).toHaveBeenCalledWith('video1.mp4');
+      expect(extractVideoMetadataMock).toHaveBeenCalledWith('/uploads/videos/video1.mp4');
+      expect(createVideoMetadataMock).toHaveBeenCalledWith({
+        sectionId: 's1',
+        steps: [],
+        difficulty: 'beginner',
+        primaryStyle: 'unknown',
+        influences: [],
+        durationCounts: 0,
+        videoType: 'uploaded',
+        tags: [],
+        fileSize: 1024000,
+        durationSeconds: 120,
+        filename: 'video1.mp4'
+      };);
+      
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Video uploaded successfully',
+          videoMetadata: videoMetadataStub
+        };);)
+      };);
+    };);
+
+    it('should return 400 if no file is uploaded', async () => {
+      mockReq.params = { sectionId: 's1' };
+      mockReq.file = null; // No file uploaded
+
+      await uploadVideoController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'No video file uploaded' });
+    };);
+
+    it('should return 400 if sectionId param is missing', async () => {
+      mockReq.params = {}; // Missing sectionId
+      mockReq.file = {
+        filename: 'video1.mp4',
+        originalname: 'myvideo.mp4',
+        mimetype: 'video/mp4',
+        size: 1024000,
+        destination: '/uploads/videos',
+        path: '/uploads/videos/video1.mp4',
+        buffer: Buffer.from([])
+      };); as Express.Multer.File;
+
+      await uploadVideoController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: expect.any(Array) })
+      };);
+    };);
+
+    it('should return 500 if video metadata extraction fails', async () => {
+      // Mock dependencies to throw an error
+      (extractVideoMetadataMock as jest.Mock).mockRejectedValue(new Error('FFmpeg error'));
+      (getVideoFilePathMock as jest.Mock).mockImplementation((filename) => 
+        `/uploads/videos/${filename}`);
+      
+      mockReq.params = { sectionId: 's1' };
+      mockReq.file = {
+        filename: 'video1.mp4',
+        originalname: 'myvideo.mp4',
+        mimetype: 'video/mp4',
+        size: 1024000,
+        destination: '/uploads/videos',
+        path: '/uploads/videos/video1.mp4',
+        buffer: Buffer.from([])
+      };); as Express.Multer.File;
+
+      await uploadVideoController(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Internal server error' });
+    };);
   });
 });

@@ -1,4 +1,5 @@
 import prisma from '../config/database'
+import Prisma = require("@prisma/client")
 
 export interface VideoMetadataListParams {
   page?: number
@@ -126,13 +127,13 @@ export async function createVideoMetadata(data: CreateVideoMetadataInput) {
   return prisma.videoMetadata.create({
     data: {
       sectionId: data.sectionId,
-      steps: data.steps,
-      difficulty: data.difficulty,
-      primaryStyle: data.primaryStyle,
-      influences: data.influences,
+      steps: data.steps as Prisma.InputJsonValue[],
+      difficulty: Prisma.Difficulty[data.difficulty.toUpperCase() as keyof typeof Prisma.Difficulty],
+      primaryStyle: Prisma.PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof Prisma.PrimaryStyle],
+      influences: data.influences as Prisma.InputJsonValue[],
       durationCounts: data.durationCounts,
-      videoType: data.videoType,
-      tags: data.tags,
+      videoType: Prisma.VideoType[data.videoType.toUpperCase() as keyof typeof Prisma.VideoType],
+      tags: data.tags as Prisma.InputJsonValue[],
       fileSize: data.fileSize ?? null,
       durationSeconds: data.durationSeconds ?? null,
       filename: data.filename ?? null,
@@ -147,13 +148,13 @@ export async function updateVideoMetadata(
   return prisma.videoMetadata.update({
     where: { id },
     data: {
-      steps: data.steps,
-      difficulty: data.difficulty,
-      primaryStyle: data.primaryStyle,
-      influences: data.influences,
+      steps: data.steps as Prisma.InputJsonValue[],
+      difficulty: Prisma.Difficulty[data.difficulty.toUpperCase() as keyof typeof Prisma.Difficulty],
+      primaryStyle: Prisma.PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof Prisma.PrimaryStyle],
+      influences: data.influences as Prisma.InputJsonValue[],
       durationCounts: data.durationCounts,
-      videoType: data.videoType,
-      tags: data.tags,
+      videoType: Prisma.VideoType[() as keyof typeof Prisma.VideoType],
+      tags: data.tags as Prisma.InputJsonValue[],
       fileSize: data.fileSize ?? null,
       durationSeconds: data.durationSeconds ?? null,
       filename: data.filename ?? null,

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import multer from 'multer';
 import {
   createVideoMetadataSchema,
   updateVideoMetadataSchema,
@@ -14,6 +15,8 @@ import {
   updateVideoMetadata,
   deleteVideoMetadata,
 } from '../models/videoMetadata';
+import { extractVideoMetadata } from '../utils/videoProcessor';
+import { getVideoFilePath } from '../utils/storage';
 
 function isZodError(error: unknown): error is z.ZodError {
   return error instanceof z.ZodError;
@@ -166,6 +169,65 @@ export async function deleteVideoMetadataController(
       res.status(400).json({ error: zodErrorDetails(error) });
     } else if (isPrismaNotFound(error)) {
       res.status(404).json({ error: 'Video metadata not found' });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+/**
+ * Upload a video file for a section
+ */
+export async function uploadVideoController(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    // The file is available at req.file (from multer middleware)
+    if (!req.file) {
+      res.status(400).json({ error: 'No video file uploaded' });
+      return;
+    }
+
+    // Extract section ID from route parameters
+    const sectionId = req.params.sectionId as string;
+
+    // Extract video metadata (duration, file size) using the uploaded file
+    const filePath = getVideoFilePath(Array.isArray(req.file.filename) ? req.file.filename[0] : req.file.filename);
+    const { duration, size: fileSize } = await extractVideoMetadata(filePath);
+
+    // Create video metadata record
+    const videoMetadata = await createVideoMetadata({
+      sectionId,
+      // Provide default values for required fields
+      steps: [], // Empty array as default
+      difficulty: 'beginner', // Default difficulty
+      primaryStyle: 'unknown', // Default style
+      influences: [], // Empty array as default
+      durationCounts: 0, // Default duration counts
+      videoType: 'uploaded', // Indicate this is an uploaded video
+      tags: [], // Empty array as default
+      fileSize, // Extracted file size
+      durationSeconds: duration, // Extracted duration
+      filename: Array.isArray(req.file.filename) ? req.file.filename[0] : req.file.filename, // Original filename from upload
+    });
+
+    res.status(201).json({
+      message: 'Video uploaded successfully',
+      videoMetadata
+    });
+  } catch (error) {
+    console.error('Error in uploadVideoController:', error);
+    // Handle multer errors
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        res.status(400).json({ error: 'File size exceeds the limit' });
+      } else {
+        res.status(400).json({ error: `Multer error: ${error.message}` });
+      }
+    } else if (error instanceof z.ZodError) {
+      res.status(400).json({ error: zodErrorDetails(error) });
     } else {
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
