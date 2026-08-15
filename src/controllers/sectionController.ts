@@ -38,7 +38,7 @@ export async function getSections(req: Request, res: Response): Promise<void> {
   try {
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
-    });
+    }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
     
     const query = sectionQuerySchema.parse(req.query);
@@ -60,19 +60,23 @@ export async function getSections(req: Request, res: Response): Promise<void> {
  */
 export async function getSectionById(req: Request, res: Response): Promise<void> {
   try {
+    console.log('req.params:', req.params);
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
-    });
+    }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
     
+    const sectionIdSchema = z.object({
+      sectionId: z.string().min(1, 'Section id is required'),
+    }).strip();
     const params = sectionIdSchema.parse(req.params);
     const section = await findSectionById(params.id, moduleIdParams.moduleId);
-
+    
     if (!section) {
       res.status(404).json({ error: 'Section not found' });
       return;
     }
-
+    
     res.json(section);
   } catch (error) {
     console.error('Validation error in getSectionById:', error);
@@ -95,7 +99,7 @@ export async function createSectionController(
   try {
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
-    });
+    }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
     
     const parsedBody = createSectionSchema.parse({
@@ -125,12 +129,15 @@ export async function updateSectionController(
   try {
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
-    });
+    }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
     
-    const params = sectionIdSchema.parse(req.params);
+    const paramsSchema = z.object({
+      sectionId: z.string().min(1, 'Section id is required'),
+    }).strip();
+    const params = paramsSchema.parse(req.params);
     const parsedBody = updateSectionSchema.parse(req.body);
-
+    
     const section = await updateSection(params.id, parsedBody, moduleIdParams.moduleId);
     res.json(section);
   } catch (error) {
@@ -156,10 +163,13 @@ export async function deleteSectionController(
   try {
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
-    });
+    }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
     
-    const params = sectionIdSchema.parse(req.params);
+    const paramsSchema = z.object({
+      sectionId: z.string().min(1, 'Section id is required'),
+    }).strip();
+    const params = paramsSchema.parse(req.params);
     await deleteSection(params.id, moduleIdParams.moduleId);
     res.status(204).send();
   } catch (error) {
