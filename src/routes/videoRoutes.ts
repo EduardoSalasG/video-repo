@@ -1,0 +1,29 @@
+import { Router } from 'express'
+import { authenticateUser } from '../middleware/auth'
+import { requireInstructor } from '../middleware/role'
+import {
+  getVideoMetadataBySectionId,
+  createVideoMetadataController,
+  updateVideoMetadataController,
+  deleteVideoMetadataController,
+} from '../controllers/videoController'
+
+const router = Router()
+router.use((req, res, next) => {
+  console.log('videoRoutes req.params:', req.params);
+  next();
+});
+
+// Get video metadata for a section
+router.get('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, getVideoMetadataBySectionId);
+
+// Create video metadata for a section
+router.post('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, requireInstructor, createVideoMetadataController);
+
+// Update video metadata for a section
+router.patch('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, requireInstructor, updateVideoMetadataController);
+
+// Delete video metadata for a section
+router.delete('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, requireInstructor, deleteVideoMetadataController);
+
+export default router
