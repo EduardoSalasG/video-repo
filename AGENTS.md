@@ -4,6 +4,13 @@ Multi-agent software development project for opencode.
 
 ## Project Overview
 
+Monorepo with two workspaces:
+
+- `backend/` — REST API (Express + Prisma + PostgreSQL), see `backend/package.json`
+- `frontend/` — React SPA (Vite + TypeScript + Tailwind), see `frontend/package.json`
+
+Root `package.json` uses npm workspaces; run workspace commands with `npm run <script> --workspace backend` (or `--workspace frontend`). The root `verify`/`typecheck`/`lint`/`test` scripts run across all workspaces.
+
 This project is developed by a coordinated multi-agent system. Each agent has a specialized role:
 
 - **architect** — System design, architecture decisions, tech stack choices
@@ -24,29 +31,23 @@ Agents collaborate through:
 ## Build & Test Commands
 
 ```bash
-# Install dependencies
+# Install dependencies (root workspaces)
 npm install
 
-# Development
-npm run dev
+# Development (defaults to backend)
+npm run dev --workspace backend
+npm run dev --workspace frontend
 
-# Build
-npm run build
+# Build / typecheck / lint / test per workspace
+npm run build --workspace backend
+npm run typecheck --workspace backend
+npm run lint --workspace backend
+npm test --workspace backend
 
-# Type checking
+# Across all workspaces
 npm run typecheck
-
-# Linting
 npm run lint
-
-# Run all tests
 npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run single test
-npm test -- --testNamePattern="<test name>"
 ```
 
 ## Code Style
@@ -60,9 +61,9 @@ npm test -- --testNamePattern="<test name>"
 
 ## Testing Strategy
 
-- Unit tests: `tests/unit/` — Test individual functions/modules
-- Integration tests: `tests/integration/` — Test component interactions
-- E2E tests: `tests/e2e/` — Test full user flows
+- Unit tests: `backend/tests/unit/` — Test individual functions/modules
+- Integration tests: `backend/tests/integration/` — Test component interactions
+- E2E tests: `backend/tests/e2e/` — Test full user flows
 - TDD: Write failing test first, then implementation
 - Target: >80% coverage on critical paths
 
@@ -95,7 +96,7 @@ PRD (context/specs/prd-*.md)
     �� Architect analyzes
 Technical Spec (context/specs/<feature>-spec.md)
     �� Implementer implements
-Code + Tests (src/, tests/)
+Code + Tests (backend/src/, backend/tests/)
 ```
 
 ### PRD Sections Required

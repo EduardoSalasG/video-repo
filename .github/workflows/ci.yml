@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -42,9 +42,11 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
+        working-directory: backend
 
       - name: Apply schema to test database
         run: npx prisma db push
+        working-directory: backend
 
       - name: Typecheck
         run: npm run typecheck
