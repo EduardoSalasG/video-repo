@@ -7,10 +7,6 @@ import {
 } from '../controllers/contentController'
 
 const router = Router()
-router.use((req, res, next) => {
-  console.log('contentRoutes req.params:', req.params);
-  next();
-});
 
 // Get markdown content for a section - accessible to all authenticated users
 router.get('/modules/:moduleId/sections/:sectionId/content', authenticateUser, getContent)

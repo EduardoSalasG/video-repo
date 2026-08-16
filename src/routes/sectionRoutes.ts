@@ -10,10 +10,6 @@ import {
 } from '../controllers/sectionController'
 
 const router = Router()
-router.use((req, res, next) => {
-  console.log('sectionRoutes req.params:', req.params);
-  next();
-});
 
 // All authenticated users can read sections
 router.get('/modules/:moduleId/sections', authenticateUser, getSections)

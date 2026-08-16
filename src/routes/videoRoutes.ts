@@ -11,10 +11,6 @@ import {
 } from '../controllers/videoController'
 
 const router = Router()
-router.use((req, res, next) => {
-  console.log('videoRoutes req.params:', req.params);
-  next();
-});
 
 // Get video metadata for a section
 router.get('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, getVideoMetadataBySectionId);
