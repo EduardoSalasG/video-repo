@@ -1,8 +1,18 @@
-import { describe, it, expect, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import prisma from '../../src/config/database.ts';
 import app from '../../src/app.ts';
 import { generateToken } from '../../src/utils/token';
+
+// Mock ffprobe-backed extraction (ffprobe is not installed on the Windows
+// test runner and the test uploads synthetic bytes that no real probe could
+// parse). The upload endpoint contract is still fully exercised.
+vi.mock('../../src/utils/videoProcessor', () => ({
+  extractVideoMetadata: vi.fn(),
+  getFileSize: vi.fn(),
+}));
+
+import { extractVideoMetadata } from '../../src/utils/videoProcessor';
 
 // Set JWT_SECRET if not set
 if (!process.env.JWT_SECRET) {
@@ -57,14 +67,26 @@ describe('Video Routes', () => {
 
   beforeEach(async () => {
     // Clear video metadata, sections, and modules before each test
+    // (children before parents to respect FK constraints, plus related tables)
+    await prisma.userProgress.deleteMany();
     await prisma.videoMetadata.deleteMany();
     await prisma.section.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.user.deleteMany();
 
     // Create a test module and section to use for video operations
     const { moduleId, sectionId } = await createModuleAndSection();
     testModuleId = moduleId;
     testSectionId = sectionId;
+
+    // Default ffprobe extraction result for upload tests
+    vi.mocked(extractVideoMetadata).mockResolvedValue({
+      duration: 120,
+      size: 1024000,
+      format: 'mp4',
+      bitrate: 1000000,
+    });
   });
 
   afterAll(async () => {
@@ -130,15 +152,12 @@ describe('Video Routes', () => {
       const videoMetadataId = videoMetadataRes.body.id;
 
       // Now test that student can read
-      await request(app)
+      const res = await request(app)
         .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(200);
 
-      await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadataId}`)
-        .set('Authorization', studentToken)
-        .expect(200);
+      expect(res.body.id).toBe(videoMetadataId);
     });
 
     it('should forbid STUDENT from creating video metadata', async () => {
@@ -188,7 +207,7 @@ describe('Video Routes', () => {
 
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadataId}`)
+        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .send({ steps: [{ step: 'updated', count: 6 }] })
         .expect(403);
@@ -218,7 +237,7 @@ describe('Video Routes', () => {
 
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadataId}`)
+        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(403);
     });
@@ -237,82 +256,53 @@ describe('Video Routes', () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const adminToken = await createToken('ADMIN');
 
+      // A section holds at most one VideoMetadata record, so clear the
+      // section's record before each create.
+      const createBody = {
+        sectionId: testSectionId,
+        steps: [{ step: 'basic step', count: 4 }],
+        difficulty: 'BEGINNER' as const,
+        primaryStyle: 'MAMBO_ON2' as const,
+        influences: ['afro-cuban'],
+        durationCounts: 8,
+        videoType: 'STEP_BREAKDOWN' as const,
+        tags: ['beginner', 'steps'],
+        fileSize: 1024000,
+        durationSeconds: 120,
+        filename: 'video1.mp4',
+      };
+
       // Test creation
       for (const token of [instructorToken, adminToken]) {
+        await prisma.videoMetadata.deleteMany({ where: { sectionId: testSectionId } });
         const res = await request(app)
           .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', token)
-          .send({
-            sectionId: testSectionId,
-            steps: [{ step: 'basic step', count: 4 }],
-            difficulty: 'BEGINNER',
-            primaryStyle: 'MAMBO_ON2',
-            influences: ['afro-cuban'],
-            durationCounts: 8,
-            videoType: 'STEP_BREAKDOWN',
-            tags: ['beginner', 'steps'],
-            fileSize: 1024000,
-            durationSeconds: 120,
-            filename: 'video1.mp4',
-          })
+          .send(createBody)
           .expect(201);
         expect(res.body).toHaveProperty('id');
-        // Clean up the created video metadata for next iteration
-        await prisma.videoMetadata.delete({ where: { id: res.body.id } });
       }
 
-      // For update and delete, we need video metadata to operate on
-      const videoMetadataRes = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
-        .set('Authorization', instructorToken)
-        .send({
-          sectionId: testSectionId,
-          steps: [{ step: 'basic step', count: 4 }],
-          difficulty: 'BEGINNER',
-          primaryStyle: 'MAMBO_ON2',
-          influences: ['afro-cuban'],
-          durationCounts: 8,
-          videoType: 'STEP_BREAKDOWN',
-          tags: ['beginner', 'steps'],
-          fileSize: 1024000,
-          durationSeconds: 120,
-          filename: 'video1.mp4',
-        })
-        .expect(201);
-      const videoMetadataId = videoMetadataRes.body.id;
-
-      // Test update
+      // Test update (the record created above still exists)
       for (const token of [instructorToken, adminToken]) {
-        await request(app)
-          .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadataId}`)
+        const res = await request(app)
+          .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', token)
           .send({ steps: [{ step: 'updated', count: 6 }] })
           .expect(200);
+        expect(res.body.steps).toEqual([{ step: 'updated', count: 6 }]);
       }
 
       // Test delete
       for (const token of [instructorToken, adminToken]) {
-        // Recreate video metadata for each delete test
-        const vmRes = await request(app)
+        await prisma.videoMetadata.deleteMany({ where: { sectionId: testSectionId } });
+        await request(app)
           .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', instructorToken)
-          .send({
-            sectionId: testSectionId,
-            steps: [{ step: 'to delete', count: 2 }],
-            difficulty: 'BEGINNER',
-            primaryStyle: 'MAMBO_ON2',
-            influences: ['afro-cuban'],
-            durationCounts: 4,
-            videoType: 'STEP_BREAKDOWN',
-            tags: ['beginner', 'steps'],
-            fileSize: 512000,
-            durationSeconds: 60,
-            filename: 'todelete.mp4',
-          })
+          .send({ ...createBody, filename: 'todelete.mp4', durationCounts: 4, fileSize: 512000, durationSeconds: 60 })
           .expect(201);
-        const delId = vmRes.body.id;
         await request(app)
-          .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${delId}`)
+          .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', token)
           .expect(204);
       }
@@ -320,129 +310,40 @@ describe('Video Routes', () => {
   });
 
   describe('GET /modules/:moduleId/sections/:sectionId/video-metadata', () => {
-    it('should return paginated list of video metadata for a section', async () => {
-      const studentToken = await createToken('STUDENT');
-      // Create two video metadata entries
-      await prisma.videoMetadata.create({
-        data: {
-          sectionId: testSectionId,
-          steps: [{ step: 'step one', count: 2 }],
-          difficulty: 'BEGINNER',
-          primaryStyle: 'MAMBO_ON2',
-          influences: [],
-          durationCounts: 4,
-          videoType: 'DEMO',
-          tags: ['beginner'],
-          fileSize: 512000,
-          durationSeconds: 60,
-          filename: 'video1.mp4',
-        },
-      });
-      await prisma.videoMetadata.create({
-        data: {
-          sectionId: testSectionId,
-          steps: [{ step: 'step two', count: 3 }],
-          difficulty: 'INTERMEDIATE',
-          primaryStyle: 'SALSA_ON1',
-          influences: ['afro-cuban'],
-          durationCounts: 6,
-          videoType: 'STEP_BREAKDOWN',
-          tags: ['intermediate'],
-          fileSize: 1024000,
-          durationSeconds: 120,
-          filename: 'video2.mp4',
-        },
-      });
-
-      const res = await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
-        .set('Authorization', studentToken)
-        .expect(200);
-
-      expect(res.body.videoMetadata).toHaveLength(2);
-      expect(res.body.pagination.total).toBe(2);
-      expect(res.body.videoMetadata[0]).toHaveProperty('id');
-    });
-
-    it('should support search query', async () => {
-      const studentToken = await createToken('STUDENT');
-      await prisma.videoMetadata.create({
-        data: {
-          sectionId: testSectionId,
-          steps: [{ step: 'basic step', count: 4 }],
-          difficulty: 'BEGINNER',
-          primaryStyle: 'MAMBO_ON2',
-          influences: ['afro-cuban'],
-          durationCounts: 8,
-          videoType: 'STEP_BREAKDOWN',
-          tags: ['beginner', 'steps'],
-          fileSize: 1024000,
-          durationSeconds: 120,
-          filename: 'intro-video.mp4',
-        },
-      });
-      await prisma.videoMetadata.create({
-        data: {
-          sectionId: testSectionId,
-          steps: [{ step: 'advanced turn', count: 2 }],
-          difficulty: 'ADVANCED',
-          primaryStyle: 'MAMBO_ON2',
-          influences: ['afro-cuban', 'jazz'],
-          durationCounts: 4,
-          videoType: 'TURN_PATTERN',
-          tags: ['advanced'],
-          fileSize: 2048000,
-          durationSeconds: 240,
-          filename: 'advanced-video.mp4',
-        },
-      });
-
-      const res = await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
-        .query({ search: 'intro' })
-        .set('Authorization', studentToken)
-        .expect(200);
-
-      expect(res.body.videoMetadata).toHaveLength(1);
-      expect(res.body.videoMetadata[0].filename).toBe('intro-video.mp4');
-    });
-  });
-
-  describe('GET /modules/:moduleId/sections/:sectionId/video-metadata/:id', () => {
-    it('should return video metadata when found', async () => {
-      const studentToken = await createToken('STUDENT');
-      const videoMetadata = await prisma.videoMetadata.create({
-        data: {
-          sectionId: testSectionId,
-          steps: [{ step: 'basic step', count: 4 }],
-          difficulty: 'BEGINNER',
-          primaryStyle: 'MAMBO_ON2',
-          influences: ['afro-cuban'],
-          durationCounts: 8,
-          videoType: 'STEP_BREAKDOWN',
-          tags: ['beginner', 'steps'],
-          fileSize: 1024000,
-          durationSeconds: 120,
-          filename: 'video1.mp4',
-        },
-      });
-
-      const res = await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadata.id}`)
-        .set('Authorization', studentToken)
-        .expect(200);
-
-      expect(res.body.id).toBe(videoMetadata.id);
-      expect(res.body.filename).toBe('video1.mp4');
-      expect(res.body.difficulty).toBe('BEGINNER');
-    });
-
-    it('should return 404 for a non-existent video metadata', async () => {
+    it('should return 404 when no video metadata exists for a section', async () => {
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/non-existent-id`)
+        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(404);
+    });
+
+    it('should return the video metadata for a section when found', async () => {
+      const studentToken = await createToken('STUDENT');
+      await prisma.videoMetadata.create({
+        data: {
+          sectionId: testSectionId,
+          steps: [{ step: 'basic step', count: 4 }],
+          difficulty: 'BEGINNER',
+          primaryStyle: 'MAMBO_ON2',
+          influences: ['afro-cuban'],
+          durationCounts: 8,
+          videoType: 'STEP_BREAKDOWN',
+          tags: ['beginner', 'steps'],
+          fileSize: 1024000,
+          durationSeconds: 120,
+          filename: 'video1.mp4',
+        },
+      });
+
+      const res = await request(app)
+        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .set('Authorization', studentToken)
+        .expect(200);
+
+      expect(res.body.sectionId).toBe(testSectionId);
+      expect(res.body.filename).toBe('video1.mp4');
+      expect(res.body.difficulty).toBe('BEGINNER');
     });
 
     it('should return 404 for video metadata belonging to another section', async () => {
@@ -455,7 +356,7 @@ describe('Video Routes', () => {
           moduleId: testModuleId,
         },
       });
-      const otherVideoMetadata = await prisma.videoMetadata.create({
+      await prisma.videoMetadata.create({
         data: {
           sectionId: otherSection.id,
           steps: [{ step: 'other step', count: 1 }],
@@ -463,7 +364,7 @@ describe('Video Routes', () => {
           primaryStyle: 'MAMBO_ON2',
           influences: [],
           durationCounts: 2,
-          videoType: 'DEMO',
+          videoType: 'STEP_BREAKDOWN',
           tags: ['other'],
           fileSize: 256000,
           durationSeconds: 30,
@@ -472,7 +373,7 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${otherVideoMetadata.id}`)
+        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(404);
     });
@@ -532,7 +433,7 @@ describe('Video Routes', () => {
     it('should return 400 for invalid body', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post(`/modules:${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ sectionId: '' }) // Invalid: empty sectionId
         .expect(400);
@@ -541,7 +442,7 @@ describe('Video Routes', () => {
     });
   });
 
-  describe('PATCH /modules/:moduleId/sections/:sectionId/video-metadata/:id', () => {
+  describe('PATCH /modules/:moduleId/sections/:sectionId/video-metadata', () => {
     it('should update video metadata as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadata = await prisma.videoMetadata.create({
@@ -552,7 +453,7 @@ describe('Video Routes', () => {
           primaryStyle: 'MAMBO_ON2',
           influences: ['afro-cuban'],
           durationCounts: 4,
-          videoType: 'DEMO',
+          videoType: 'STEP_BREAKDOWN',
           tags: ['beginner'],
           fileSize: 512000,
           durationSeconds: 60,
@@ -561,7 +462,7 @@ describe('Video Routes', () => {
       });
 
       const res = await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadata.id}`)
+        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ steps: [{ step: 'updated step', count: 4 }], difficulty: 'INTERMEDIATE' })
         .expect(200);
@@ -574,7 +475,7 @@ describe('Video Routes', () => {
     it('should return 404 when updating a non-existent video metadata', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/non-existent-id`)
+        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ steps: [{ step: 'updated', count: 6 }] })
         .expect(404);
@@ -598,7 +499,7 @@ describe('Video Routes', () => {
           primaryStyle: 'MAMBO_ON2',
           influences: [],
           durationCounts: 2,
-          videoType: 'DEMO',
+          videoType: 'STEP_BREAKDOWN',
           tags: ['other'],
           fileSize: 256000,
           durationSeconds: 30,
@@ -607,7 +508,7 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${otherVideoMetadata.id}`)
+        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ steps: [{ step: 'hacked', count: 10 }] })
         .expect(404);
@@ -632,7 +533,7 @@ describe('Video Routes', () => {
       });
 
       const res = await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadata.id}`)
+        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ difficulty: 'EXPERT' }) // Invalid difficulty
         .expect(400);
@@ -641,7 +542,7 @@ describe('Video Routes', () => {
     });
   });
 
-  describe('DELETE /modules/:moduleId/sections/:sectionId/video-metadata/:id', () => {
+  describe('DELETE /modules/:moduleId/sections/:sectionId/video-metadata', () => {
     it('should delete video metadata as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadata = await prisma.videoMetadata.create({
@@ -661,7 +562,7 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${videoMetadata.id}`)
+        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .expect(204);
 
@@ -672,7 +573,7 @@ describe('Video Routes', () => {
     it('should return 404 when deleting a non-existent video metadata', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/non-existent-id`)
+        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
@@ -695,7 +596,7 @@ describe('Video Routes', () => {
           primaryStyle: 'MAMBO_ON2',
           influences: [],
           durationCounts: 2,
-          videoType: 'DEMO',
+          videoType: 'STEP_BREAKDOWN',
           tags: ['other'],
           fileSize: 256000,
           durationSeconds: 30,
@@ -704,7 +605,7 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata/${otherVideoMetadata.id}`)
+        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
@@ -747,13 +648,25 @@ describe('Video Routes', () => {
 
     it('should return 400 if sectionId param is missing', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
-      // This test would require modifying the URL, but we'll skip as it's tested in unit tests
-      // The route requires sectionId in the path, so missing it would be a 404, not 400
+      // The route requires sectionId in the path; a request without it does
+      // not match any route and is rejected as not found.
+      await request(app)
+        .post(`/modules/${testModuleId}/sections/upload-video`)
+        .set('Authorization', instructorToken)
+        .expect(404);
     });
 
     it('should return 500 if video metadata extraction fails', async () => {
-      // We'll mock this in unit tests; integration test would require more complex mocking
-      // For now, we'll rely on unit tests for this scenario
+      const instructorToken = await createToken('INSTRUCTOR');
+      vi.mocked(extractVideoMetadata).mockRejectedValue(
+        new Error('Failed to extract video metadata: Cannot find ffprobe')
+      );
+
+      await request(app)
+        .post(`/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .set('Authorization', instructorToken)
+        .attach('video', Buffer.from('fake video content'), 'test-video.mp4')
+        .expect(500);
     });
   });
 });
