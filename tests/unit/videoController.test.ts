@@ -13,8 +13,8 @@ import {
   findVideoMetadataById,
   findVideoMetadataBySectionId,
   createVideoMetadata,
-  updateVideoMetadata,
-  deleteVideoMetadata,
+  updateVideoMetadataBySectionId,
+  deleteVideoMetadataBySectionId,
 } from '../../src/models/videoMetadata';
 
 // Mock the videoMetadata model
@@ -24,8 +24,8 @@ vi.mock('../../src/models/videoMetadata', () => {
     findVideoMetadataById: vi.fn(),
     findVideoMetadataBySectionId: vi.fn(),
     createVideoMetadata: vi.fn(),
-    updateVideoMetadata: vi.fn(),
-    deleteVideoMetadata: vi.fn(),
+    updateVideoMetadataBySectionId: vi.fn(),
+    deleteVideoMetadataBySectionId: vi.fn(),
   };
 });
 
@@ -43,8 +43,8 @@ import {
   findVideoMetadataById as findVideoMetadataByIdMock,
   findVideoMetadataBySectionId as findVideoMetadataBySectionIdMock,
   createVideoMetadata as createVideoMetadataMock,
-  updateVideoMetadata as updateVideoMetadataMock,
-  deleteVideoMetadata as deleteVideoMetadataMock,
+  updateVideoMetadataBySectionId as updateVideoMetadataBySectionIdMock,
+  deleteVideoMetadataBySectionId as deleteVideoMetadataBySectionIdMock,
 } from '../../src/models/videoMetadata';
 import { extractVideoMetadata } from '../../src/utils/videoProcessor';
 import { getVideoFilePath } from '../../src/utils/storage';
@@ -145,7 +145,7 @@ describe('videoController', () => {
   describe('getVideoMetadataBySectionId', () => {
     it('should return video metadata when found', async () => {
       (findVideoMetadataBySectionIdMock as jest.Mock).mockResolvedValue(videoMetadataStub);
-      mockReq.params = { id: 's1' };
+      mockReq.params = { sectionId: 's1' };
 
       await getVideoMetadataBySectionId(mockReq, mockRes);
 
@@ -155,7 +155,7 @@ describe('videoController', () => {
 
     it('should return 404 when video metadata is not found for section', async () => {
       (findVideoMetadataBySectionIdMock as jest.Mock).mockResolvedValue(null);
-      mockReq.params = { id: 's1' };
+      mockReq.params = { sectionId: 's1' };
 
       await getVideoMetadataBySectionId(mockReq, mockRes);
 
@@ -228,19 +228,19 @@ describe('videoController', () => {
   describe('updateVideoMetadataController', () => {
     it('should update video metadata and return 200', async () => {
       const updated = { ...videoMetadataStub, steps: [{ step: 'updated', count: 6 }] };
-      (updateVideoMetadataMock as jest.Mock).mockResolvedValue(updated);
-      mockReq.params = { id: 'vm1' };
+      (updateVideoMetadataBySectionIdMock as jest.Mock).mockResolvedValue(updated);
+      mockReq.params = { sectionId: 's1' };
       mockReq.body = { steps: [{ step: 'updated', count: 6 }] };
 
       await updateVideoMetadataController(mockReq, mockRes);
 
-      expect(updateVideoMetadataMock).toHaveBeenCalledWith('vm1', { steps: [{ step: 'updated', count: 6 }] });
+      expect(updateVideoMetadataBySectionIdMock).toHaveBeenCalledWith('s1', { steps: [{ step: 'updated', count: 6 }] });
       expect(mockRes.json).toHaveBeenCalledWith(updated);
     });
 
     it('should return 404 when video metadata is not found', async () => {
-      (updateVideoMetadataMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
-      mockReq.params = { id: 'vm1' };
+      (updateVideoMetadataBySectionIdMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
+      mockReq.params = { sectionId: 's1' };
       mockReq.body = { steps: [{ step: 'updated', count: 6 }] };
 
       await updateVideoMetadataController(mockReq, mockRes);
@@ -250,7 +250,7 @@ describe('videoController', () => {
     });
 
     it('should return 400 if body validation fails', async () => {
-      mockReq.params = { id: 'vm1' };
+      mockReq.params = { sectionId: 's1' };
       mockReq.body = { difficulty: 'EXPERT' }; // Invalid difficulty
 
       await updateVideoMetadataController(mockReq, mockRes);
@@ -261,7 +261,7 @@ describe('videoController', () => {
       );
     });
 
-    it('should return 400 if id param is missing', async () => {
+    it('should return 400 if sectionId param is missing', async () => {
       mockReq.params = {};
       mockReq.body = { steps: [{ step: 'updated', count: 6 }] };
 
@@ -276,19 +276,19 @@ describe('videoController', () => {
 
   describe('deleteVideoMetadataController', () => {
     it('should delete video metadata and return 204', async () => {
-      (deleteVideoMetadataMock as jest.Mock).mockResolvedValue(videoMetadataStub);
-      mockReq.params = { id: 'vm1' };
+      (deleteVideoMetadataBySectionIdMock as jest.Mock).mockResolvedValue(videoMetadataStub);
+      mockReq.params = { sectionId: 's1' };
 
       await deleteVideoMetadataController(mockReq, mockRes);
 
-      expect(deleteVideoMetadataMock).toHaveBeenCalledWith('vm1');
+      expect(deleteVideoMetadataBySectionIdMock).toHaveBeenCalledWith('s1');
       expect(mockRes.status).toHaveBeenCalledWith(204);
       expect(mockRes.send).toHaveBeenCalled();
     });
 
     it('should return 404 when video metadata is not found', async () => {
-      (deleteVideoMetadataMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
-      mockReq.params = { id: 'vm1' };
+      (deleteVideoMetadataBySectionIdMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
+      mockReq.params = { sectionId: 's1' };
 
       await deleteVideoMetadataController(mockReq, mockRes);
 
@@ -296,7 +296,7 @@ describe('videoController', () => {
       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Video metadata not found' });
     });
 
-    it('should return 400 if id param is missing', async () => {
+    it('should return 400 if sectionId param is missing', async () => {
       mockReq.params = {};
 
       await deleteVideoMetadataController(mockReq, mockRes);
@@ -366,11 +366,11 @@ describe('videoController', () => {
       expect(createVideoMetadataMock).toHaveBeenCalledWith({
         sectionId: 's1',
         steps: [],
-        difficulty: 'beginner',
-        primaryStyle: 'unknown',
+        difficulty: 'BEGINNER',
+        primaryStyle: 'MAMBO_ON2',
         influences: [],
         durationCounts: 0,
-        videoType: 'uploaded',
+        videoType: 'STEP_BREAKDOWN',
         tags: [],
         fileSize: 1024000,
         durationSeconds: 120,

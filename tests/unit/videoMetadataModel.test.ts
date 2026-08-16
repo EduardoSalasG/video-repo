@@ -4,8 +4,8 @@ import {
   findVideoMetadataById,
   findVideoMetadataBySectionId,
   createVideoMetadata,
-  updateVideoMetadata,
-  deleteVideoMetadata,
+  updateVideoMetadataBySectionId,
+  deleteVideoMetadataBySectionId,
 } from '../../src/models/videoMetadata';
 
 // Mock prisma
@@ -229,18 +229,18 @@ describe('videoMetadata model', () => {
     });
   });
 
-  describe('updateVideoMetadata', () => {
-    it('should update video metadata by id', async () => {
+  describe('updateVideoMetadataBySectionId', () => {
+    it('should update video metadata by section id', async () => {
       (prisma.videoMetadata.update as jest.Mock).mockResolvedValue(videoMetadataStub);
 
-      const result = await updateVideoMetadata('vm1', {
+      const result = await updateVideoMetadataBySectionId('s1', {
         title: 'Updated Video Metadata',
         description: null,
       });
 
       expect(prisma.videoMetadata.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'vm1' },
+          where: { sectionId: 's1' },
           data: {
             steps: undefined,
             difficulty: undefined,
@@ -249,9 +249,9 @@ describe('videoMetadata model', () => {
             durationCounts: undefined,
             videoType: undefined,
             tags: undefined,
-            fileSize: null,
-            durationSeconds: null,
-            filename: null,
+            fileSize: undefined,
+            durationSeconds: undefined,
+            filename: undefined,
           },
         })
       );
@@ -259,13 +259,13 @@ describe('videoMetadata model', () => {
     });
   });
 
-  describe('deleteVideoMetadata', () => {
-    it('should delete video metadata by id', async () => {
+  describe('deleteVideoMetadataBySectionId', () => {
+    it('should delete video metadata by section id', async () => {
       (prisma.videoMetadata.delete as jest.Mock).mockResolvedValue(videoMetadataStub);
 
-      const result = await deleteVideoMetadata('vm1');
+      const result = await deleteVideoMetadataBySectionId('s1');
 
-      expect(prisma.videoMetadata.delete).toHaveBeenCalledWith({ where: { id: 'vm1' } });
+      expect(prisma.videoMetadata.delete).toHaveBeenCalledWith({ where: { sectionId: 's1' } });
       expect(result).toBe(videoMetadataStub);
     });
   });
