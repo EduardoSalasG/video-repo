@@ -127,9 +127,11 @@ describe('Authentication Middleware', () => {
       const token = 'invalid-token'
       mockReq.headers = { authorization: `Bearer ${token}` }
       
-      // Mock verifyToken to throw
+      // Mock verifyToken to throw (jsonwebtoken throws JsonWebTokenError for invalid tokens)
       ;(verifyToken as vi.Mock).mockImplementation(() => {
-        throw new Error('Invalid token')
+        const err = new Error('Invalid token') as any
+        err.name = 'JsonWebTokenError'
+        throw err
       })
       
       // Act

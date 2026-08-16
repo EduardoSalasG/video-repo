@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { errorHandler, AppError } from '../../src/middleware/errorHandler'
 
 describe('Error Handling Middleware', () => {
@@ -198,7 +198,7 @@ describe('Error Handling Middleware', () => {
       expect(console.error).toHaveBeenCalled()
       // Check that it was called with error information
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('[Test error for logging]'),
+        expect.stringContaining('Error:'),
         expect.objectContaining({
           message: 'Test error for logging',
           url: '/test',

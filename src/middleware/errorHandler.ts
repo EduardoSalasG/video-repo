@@ -56,6 +56,3 @@ export function errorHandler(
     }
   })
 }
-
-// Export for use in route handlers
-export { AppError }

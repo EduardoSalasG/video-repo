@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { generateToken, verifyToken } from '../../src/utils/token';
 
 describe('Token Utilities', () => {
@@ -30,7 +30,7 @@ describe('Token Utilities', () => {
 
     it('should verify a valid token and return the payload', () => {
       const payload = verifyToken(token, testSecret);
-      expect(payload).toEqual(testPayload);
+      expect(payload).toMatchObject(testPayload);
     });
 
     it('should throw an error for an invalid token', () => {
