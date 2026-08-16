@@ -141,12 +141,12 @@ export async function createVideoMetadata(data: CreateVideoMetadataInput) {
   })
 }
 
-export async function updateVideoMetadata(
-  id: string,
+export async function updateVideoMetadataBySectionId(
+  sectionId: string,
   data: UpdateVideoMetadataInput
 ) {
   return prisma.videoMetadata.update({
-    where: { id },
+    where: { sectionId },
     data: {
       steps: data.steps as Prisma.InputJsonValue[],
       difficulty: data.difficulty
@@ -161,13 +161,13 @@ export async function updateVideoMetadata(
         ? Prisma.VideoType[data.videoType.toUpperCase() as keyof typeof Prisma.VideoType]
         : undefined,
       tags: data.tags as Prisma.InputJsonValue[],
-      fileSize: data.fileSize ?? null,
-      durationSeconds: data.durationSeconds ?? null,
-      filename: data.filename ?? null,
+      fileSize: 'fileSize' in data ? data.fileSize : undefined,
+      durationSeconds: 'durationSeconds' in data ? data.durationSeconds : undefined,
+      filename: 'filename' in data ? data.filename : undefined,
     },
   })
 }
 
-export async function deleteVideoMetadata(id: string) {
-  return prisma.videoMetadata.delete({ where: { id } })
+export async function deleteVideoMetadataBySectionId(sectionId: string) {
+  return prisma.videoMetadata.delete({ where: { sectionId } })
 }

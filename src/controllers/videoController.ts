@@ -13,8 +13,8 @@ import {
   findVideoMetadataById,
   findVideoMetadataBySectionId,
   createVideoMetadata,
-  updateVideoMetadata,
-  deleteVideoMetadata,
+  updateVideoMetadataBySectionId,
+  deleteVideoMetadataBySectionId,
 } from '../models/videoMetadata';
 import { extractVideoMetadata } from '../utils/videoProcessor';
 import { getVideoFilePath } from '../utils/storage';
@@ -85,8 +85,8 @@ export async function getVideoMetadataById(req: Request, res: Response): Promise
  */
 export async function getVideoMetadataBySectionId(req: Request, res: Response): Promise<void> {
   try {
-    const params = videoMetadataIdSchema.parse(req.params);
-    const videoMetadata = await findVideoMetadataBySectionId(params.id);
+    const params = videoMetadataSectionIdSchema.parse(req.params);
+    const videoMetadata = await findVideoMetadataBySectionId(params.sectionId);
     
     if (!videoMetadata) {
       res.status(404).json({ error: 'Video metadata not found for this section' });
@@ -135,10 +135,10 @@ export async function updateVideoMetadataController(
   res: Response
 ): Promise<void> {
   try {
-    const params = videoMetadataIdSchema.parse(req.params);
+    const params = videoMetadataSectionIdSchema.parse(req.params);
     const parsedBody = updateVideoMetadataSchema.parse(req.body);
     
-    const videoMetadata = await updateVideoMetadata(params.id, parsedBody);
+    const videoMetadata = await updateVideoMetadataBySectionId(params.sectionId, parsedBody);
     res.json(videoMetadata);
   } catch (error) {
     console.error('Validation error in updateVideoMetadataController:', error);
@@ -161,8 +161,8 @@ export async function deleteVideoMetadataController(
   res: Response
 ): Promise<void> {
   try {
-    const params = videoMetadataIdSchema.parse(req.params);
-    await deleteVideoMetadata(params.id);
+    const params = videoMetadataSectionIdSchema.parse(req.params);
+    await deleteVideoMetadataBySectionId(params.sectionId);
     res.status(204).send();
   } catch (error) {
     console.error('Validation error in deleteVideoMetadataController:', error);
@@ -204,11 +204,11 @@ export async function uploadVideoController(
       sectionId,
       // Provide default values for required fields
       steps: [], // Empty array as default
-      difficulty: 'beginner', // Default difficulty
-      primaryStyle: 'unknown', // Default style
+      difficulty: 'BEGINNER', // Default difficulty
+      primaryStyle: 'MAMBO_ON2', // Default style
       influences: [], // Empty array as default
       durationCounts: 0, // Default duration counts
-      videoType: 'uploaded', // Indicate this is an uploaded video
+      videoType: 'STEP_BREAKDOWN', // Indicate this is an uploaded video
       tags: [], // Empty array as default
       fileSize, // Extracted file size
       durationSeconds: duration, // Extracted duration
