@@ -4,7 +4,7 @@
 
 ## Authentication
 
-All endpoints except the three auth endpoints (`POST /auth/register`, `POST /auth/login`, `POST /auth/magic-link`) require a **JWT bearer token**.
+All endpoints except the two auth endpoints (`POST /auth/register`, `POST /auth/login`) and the magic-link request (`POST /auth/magic-link`) require a **JWT bearer token**.
 
 | Header | Value |
 |--------|-------|
@@ -136,6 +136,40 @@ Content-Type: application/json
 The user object never includes `passwordHash`.
 
 **Errors**: `400` validation, `401` invalid email or password (generic message to avoid user enumeration).
+
+---
+
+### GET /auth/me
+
+Return the currently authenticated user (including role, which is not present in the JWT payload). Requires auth.
+
+**Example request**:
+
+```http
+GET /auth/me
+Authorization: Bearer <token>
+```
+
+**Example response** (`200`):
+
+```json
+{
+  "user": {
+    "id": "b3f1...",
+    "email": "ana@example.com",
+    "username": "ana_dancer",
+    "firstName": "Ana",
+    "lastName": "Lopez",
+    "role": "STUDENT",
+    "createdAt": "2026-08-15T10:00:00.000Z",
+    "updatedAt": "2026-08-15T10:00:00.000Z"
+  }
+}
+```
+
+The user object never includes `passwordHash`.
+
+**Errors**: `401` missing/invalid/expired token or user not found.
 
 ---
 

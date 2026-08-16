@@ -6,6 +6,14 @@ import { generateToken } from '../utils/token';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 
+/**
+ * Return the currently authenticated user.
+ * `authenticateUser` middleware attaches `req.user`.
+ */
+export async function getCurrentUser(req: Request, res: Response): Promise<void> {
+  res.status(200).json({ user: (req as any).user });
+}
+
 function isZodError(error: unknown): error is z.ZodError {
   return error instanceof z.ZodError;
 }

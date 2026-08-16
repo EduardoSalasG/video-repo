@@ -2,10 +2,28 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import prisma from '../../src/config/database.ts';
 import app from '../../src/app.ts';
+import { generateToken } from '../../src/utils/token';
 
 // Set JWT_SECRET if not set
 if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = 'test-secret';
+}
+
+async function createUser(role: string) {
+  return prisma.user.create({
+    data: {
+      email: `${role.toLowerCase()}-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}@test.com`,
+      username: `${role.toLowerCase()}-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}`,
+      firstName: role,
+      lastName: 'User',
+      passwordHash: 'hashed',
+      role: role as 'ADMIN' | 'INSTRUCTOR' | 'STUDENT',
+    },
+  });
 }
 
 describe('Auth Routes', () => {
@@ -122,6 +140,26 @@ describe('Auth Routes', () => {
 
       expect(res.body).toHaveProperty('message');
       expect(res.body.message).toContain('magic link');
+    });
+  });
+
+  describe('GET /auth/me', () => {
+    it('returns the authenticated user', async () => {
+      const user = await createUser('STUDENT');
+      const res = await request(app)
+        .get('/auth/me')
+        .set('Authorization', `Bearer ${generateToken({ userId: user.id }, process.env.JWT_SECRET!)}`);
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        id: user.id,
+        email: user.email,
+        role: 'STUDENT',
+      });
+    });
+
+    it('rejects unauthenticated requests', async () => {
+      const res = await request(app).get('/auth/me');
+      expect(res.status).toBe(401);
     });
   });
 });

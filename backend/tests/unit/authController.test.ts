@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { register, login, magicLink } from '../../src/controllers/authController';
+import { register, login, magicLink, getCurrentUser } from '../../src/controllers/authController';
 import { registerSchema, loginSchema, magicLoginSchema } from '../../src/validators/authValidators';
 import { hashPassword, verifyPassword } from '../../src/utils/password';
 import { Role } from '../../src/types/enums';
@@ -300,6 +300,15 @@ describe('authController', () => {
           ]),
         })
       );
+    });
+  });
+
+  describe('getCurrentUser', () => {
+    it('getCurrentUser returns req.user', async () => {
+      const mockUser = { id: 'u1', role: 'STUDENT' };
+      const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+      await getCurrentUser({ user: mockUser } as any, res, vi.fn() as any);
+      expect(res.json).toHaveBeenCalledWith({ user: mockUser });
     });
   });
 });
