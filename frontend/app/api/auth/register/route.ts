@@ -1,0 +1,24 @@
+import { NextResponse } from 'next/server'
+import { register } from '@/lib/api'
+import { setSessionCookie } from '@/lib/session'
+
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => null)
+  if (!body?.email || !body?.username || !body?.password || !body?.firstName || !body?.lastName) {
+    return NextResponse.json({ error: 'Email, username, password, first name and last name are required' }, { status: 400 })
+  }
+  try {
+    const { accessToken, user } = await register({
+      email: String(body.email),
+      username: String(body.username),
+      password: String(body.password),
+      firstName: String(body.firstName),
+      lastName: String(body.lastName),
+    })
+    await setSessionCookie(accessToken)
+    return NextResponse.json({ user }, { status: 201 })
+  } catch (err) {
+    const status = err instanceof Error && /401/.test(err.message) ? 401 : 500
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Registration failed' }, { status })
+  }
+}
