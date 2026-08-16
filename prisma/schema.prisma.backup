@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  role      String   @default("student")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courses   Course[] @relation("InstructorCourses")
+  
+  @@index([email])
+}
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  level       String   @default("beginner")
+  instructorId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  instructor  User     @relation("InstructorCourses", fields: [instructorId], references: [id])
+  lessons     Lesson[]
+  
+  @@index([instructorId])
+}
+
+model Lesson {
+  id        Int      @id @default(autoincrement())
+  title     String
+  videoUrl  String?
+  courseId  Int
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  course    Course     @relation(fields: [courseId], references: [id])
+  
+  @@index([courseId])
+}
