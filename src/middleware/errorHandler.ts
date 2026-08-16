@@ -25,7 +25,7 @@ export function errorHandler(
   err: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   // Set default values
   const statusCode = err.statusCode || err.status || 500

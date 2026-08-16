@@ -12,7 +12,7 @@ export function generateToken(
   secret: string,
   expiresIn: string | number = '1h'
 ): string {
-  return jwt.sign(payload, secret, { expiresIn });
+  return jwt.sign(payload, secret, { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] });
 }
 
 /**
@@ -22,6 +22,6 @@ export function generateToken(
  * @returns The decoded payload if valid
  * @throws If the token is invalid or expired
  */
-export function verifyToken(token: string, secret: string): object {
+export function verifyToken(token: string, secret: string): string | jwt.JwtPayload {
   return jwt.verify(token, secret);
 }

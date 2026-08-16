@@ -4,7 +4,6 @@ import {
   createSectionSchema,
   updateSectionSchema,
   sectionQuerySchema,
-  sectionIdSchema,
 } from '../validators/sectionValidators';
 import {
   findAllSections,

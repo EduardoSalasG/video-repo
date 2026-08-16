@@ -1,11 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../config/database';
 import { registerSchema, loginSchema, magicLoginSchema } from '../validators/authValidators';
 import { hashPassword, verifyPassword } from '../utils/password';
-import { generateToken, verifyToken } from '../utils/token';
+import { generateToken } from '../utils/token';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
-import { User } from '../types';
 
 function isZodError(error: unknown): error is z.ZodError {
   return error instanceof z.ZodError;
@@ -114,7 +113,8 @@ export async function login(req: Request, res: Response): Promise<void> {
     const accessToken = generateToken({ userId: user.id }, jwtSecret, '1h');
 
     // Return response (without passwordHash)
-    const { passwordHash, ...userWithoutPassword } = user;
+    const userWithoutPassword = { ...user } as Record<string, unknown>
+    delete userWithoutPassword.passwordHash
     res.json({
       accessToken,
       user: userWithoutPassword,
@@ -152,8 +152,7 @@ export async function magicLink(req: Request, res: Response): Promise<void> {
 
     // Generate a magic link token (we'll use a random UUID for simplicity)
     // In a production app, you might want to use a cryptographically random string.
-    const crypto = require('crypto');
-    const token = crypto.randomUUID();
+    const token = randomUUID();
 
     // Set expiration to 1 hour from now
     const expiresAt = new Date();

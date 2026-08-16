@@ -1,5 +1,5 @@
 import prisma from '../config/database'
-import Prisma = require("@prisma/client")
+import { Prisma, Difficulty, PrimaryStyle, VideoType } from '@prisma/client'
 
 export interface VideoMetadataListParams {
   page?: number
@@ -128,11 +128,11 @@ export async function createVideoMetadata(data: CreateVideoMetadataInput) {
     data: {
       sectionId: data.sectionId,
       steps: data.steps as Prisma.InputJsonValue[],
-      difficulty: Prisma.Difficulty[data.difficulty.toUpperCase() as keyof typeof Prisma.Difficulty],
-      primaryStyle: Prisma.PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof Prisma.PrimaryStyle],
+      difficulty: Difficulty[data.difficulty.toUpperCase() as keyof typeof Difficulty],
+      primaryStyle: PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof PrimaryStyle],
       influences: data.influences as Prisma.InputJsonValue[],
       durationCounts: data.durationCounts,
-      videoType: Prisma.VideoType[data.videoType.toUpperCase() as keyof typeof Prisma.VideoType],
+      videoType: VideoType[data.videoType.toUpperCase() as keyof typeof VideoType],
       tags: data.tags as Prisma.InputJsonValue[],
       fileSize: data.fileSize ?? null,
       durationSeconds: data.durationSeconds ?? null,
@@ -150,15 +150,15 @@ export async function updateVideoMetadataBySectionId(
     data: {
       steps: data.steps as Prisma.InputJsonValue[],
       difficulty: data.difficulty
-        ? Prisma.Difficulty[data.difficulty.toUpperCase() as keyof typeof Prisma.Difficulty]
+        ? Difficulty[data.difficulty.toUpperCase() as keyof typeof Difficulty]
         : undefined,
       primaryStyle: data.primaryStyle
-        ? Prisma.PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof Prisma.PrimaryStyle]
+        ? PrimaryStyle[data.primaryStyle.toUpperCase() as keyof typeof PrimaryStyle]
         : undefined,
       influences: data.influences as Prisma.InputJsonValue[],
       durationCounts: data.durationCounts,
       videoType: data.videoType
-        ? Prisma.VideoType[data.videoType.toUpperCase() as keyof typeof Prisma.VideoType]
+        ? VideoType[data.videoType.toUpperCase() as keyof typeof VideoType]
         : undefined,
       tags: data.tags as Prisma.InputJsonValue[],
       fileSize: 'fileSize' in data ? data.fileSize : undefined,

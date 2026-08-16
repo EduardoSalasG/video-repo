@@ -68,9 +68,10 @@ export async function authenticateUser(
     next()
   } catch (error) {
     // Handle token verification errors
-    if (error.name === 'JsonWebTokenError') {
+    const err = error as { name?: string }
+    if (err.name === 'JsonWebTokenError') {
       res.status(401).json({ error: 'Unauthorized: Invalid token' })
-    } else if (error.name === 'TokenExpiredError') {
+    } else if (err.name === 'TokenExpiredError') {
       res.status(401).json({ error: 'Unauthorized: Token expired' })
     } else {
       res.status(500).json({ error: 'Internal server error' })

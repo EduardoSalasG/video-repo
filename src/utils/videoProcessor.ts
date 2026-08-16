@@ -1,10 +1,9 @@
 import ffmpeg from 'fluent-ffmpeg';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
-import path from 'path';
 
 // Promisify ffmpeg.ffprobe
-const ffprobeAsync = promisify(ffmpeg.ffprobe);
+const ffprobeAsync: (file: string) => Promise<ffmpeg.FfprobeData> = promisify(ffmpeg.ffprobe);
 
 /**
  * Extract video metadata including duration and file size
@@ -27,13 +26,14 @@ export async function extractVideoMetadata(
     const metadata = await ffprobeAsync(filePath);
     
     return {
-      duration: parseFloat(metadata.format.duration || '0'),
-      size: parseInt(metadata.format.size || '0', 10),
+      duration: typeof metadata.format.duration === 'number' ? metadata.format.duration : parseFloat(String(metadata.format.duration || '0')),
+      size: typeof metadata.format.size === 'number' ? metadata.format.size : parseInt(String(metadata.format.size || '0'), 10),
       format: metadata.format.format_name,
-      bitrate: parseInt(metadata.format.bit_rate || '0', 10)
+      bitrate: typeof metadata.format.bit_rate === 'number' ? metadata.format.bit_rate : parseInt(String(metadata.format.bit_rate || '0'), 10)
     };
   } catch (error) {
-    throw new Error(`Failed to extract video metadata: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to extract video metadata: ${message}`, { cause: error });
   }
 }
 
@@ -47,6 +47,7 @@ export async function getFileSize(filePath: string): Promise<number> {
     const stats = await fs.stat(filePath);
     return stats.size;
   } catch (error) {
-    throw new Error(`Failed to get file size: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to get file size: ${message}`, { cause: error });
   }
 }

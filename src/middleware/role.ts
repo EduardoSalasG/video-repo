@@ -34,7 +34,7 @@ export function authorizeRole(...allowedRoles: (string | string[])[]) {
 
       // User has required role, proceed to next middleware
       next()
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Internal server error' })
     }
   }
