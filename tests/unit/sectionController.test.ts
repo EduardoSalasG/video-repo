@@ -93,7 +93,7 @@ describe('sectionController', () => {
 describe('getSectionById', () => {
      it('should return a section when found', async () => {
        (findSectionByIdMock as jest.Mock).mockResolvedValue(sectionStub);
-       mockReq.params = { id: '1', moduleId: 'module1' };
+       mockReq.params = { sectionId: '1', moduleId: 'module1' };
 
        await getSectionById(mockReq, mockRes);
 
@@ -103,7 +103,7 @@ describe('getSectionById', () => {
 
      it('should return 404 when section is not found', async () => {
        (findSectionByIdMock as jest.Mock).mockResolvedValue(null);
-       mockReq.params = { id: '1', moduleId: 'module1' };
+       mockReq.params = { sectionId: '1', moduleId: 'module1' };
 
        await getSectionById(mockReq, mockRes);
 
@@ -123,7 +123,7 @@ describe('getSectionById', () => {
      });
 
      it('should return 400 if moduleId param is missing', async () => {
-       mockReq.params = { id: '1' };
+       mockReq.params = { sectionId: '1' };
 
        await getSectionById(mockReq, mockRes);
 
@@ -175,7 +175,7 @@ describe('updateSectionController', () => {
      it('should update a section and return 200', async () => {
        const updated = { ...sectionStub, title: 'Updated Section' };
        (updateSectionMock as jest.Mock).mockResolvedValue(updated);
-       mockReq.params = { id: '1', moduleId: 'module1' };
+       mockReq.params = { sectionId: '1', moduleId: 'module1' };
        mockReq.body = { title: 'Updated Section' };
 
        await updateSectionController(mockReq, mockRes);
@@ -186,7 +186,7 @@ describe('updateSectionController', () => {
 
      it('should return 404 when section is not found', async () => {
        (updateSectionMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
-       mockReq.params = { id: '1', moduleId: 'module1' };
+       mockReq.params = { sectionId: '1', moduleId: 'module1' };
        mockReq.body = { title: 'Updated' };
 
        await updateSectionController(mockReq, mockRes);
@@ -196,7 +196,7 @@ describe('updateSectionController', () => {
      });
 
      it('should return 400 if body validation fails', async () => {
-       mockReq.params = { id: '1', moduleId: 'module1' };
+       mockReq.params = { sectionId: '1', moduleId: 'module1' };
        mockReq.body = { title: '' };
 
        await updateSectionController(mockReq, mockRes);
@@ -220,7 +220,7 @@ describe('updateSectionController', () => {
      });
 
      it('should return 400 if moduleId param is missing', async () => {
-       mockReq.params = { id: '1' };
+       mockReq.params = { sectionId: '1' };
        mockReq.body = { title: 'Updated' };
 
        await updateSectionController(mockReq, mockRes);
@@ -235,7 +235,7 @@ describe('updateSectionController', () => {
 describe('deleteSectionController', () => {
      it('should delete a section and return 204', async () => {
        (deleteSectionMock as jest.Mock).mockResolvedValue(sectionStub);
-       mockReq.params = { id: '1', moduleId: 'module1' };
+       mockReq.params = { sectionId: '1', moduleId: 'module1' };
 
        await deleteSectionController(mockReq, mockRes);
 
@@ -246,7 +246,7 @@ describe('deleteSectionController', () => {
 
      it('should return 404 when section is not found', async () => {
        (deleteSectionMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
-       mockReq.params = { id: '1', moduleId: 'module1' };
+       mockReq.params = { sectionId: '1', moduleId: 'module1' };
 
        await deleteSectionController(mockReq, mockRes);
 
@@ -266,7 +266,7 @@ describe('deleteSectionController', () => {
      });
 
      it('should return 400 if moduleId param is missing', async () => {
-       mockReq.params = { id: '1' };
+       mockReq.params = { sectionId: '1' };
 
        await deleteSectionController(mockReq, mockRes);
 

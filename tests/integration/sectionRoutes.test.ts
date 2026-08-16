@@ -38,9 +38,14 @@ describe('Section Routes', () => {
   let testModuleId: string;
 
   beforeEach(async () => {
-    // Clear sections and modules before each test
+    // Clear sections and modules before each test (children before parents
+    // to respect FK constraints, plus all related tables for full isolation)
+    await prisma.userProgress.deleteMany();
+    await prisma.videoMetadata.deleteMany();
     await prisma.section.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.user.deleteMany();
 
     // Create a test module to use for section operations
     const module = await prisma.module.create({
@@ -339,7 +344,7 @@ describe('Section Routes', () => {
           title: 'Warm Up',
           orderIndex: 0,
           moduleId: testModuleId,
-          content: 'Stretching exercises',
+          markdownContent: 'Stretching exercises',
           videoUrl: 'https://example.com/video.mp4',
         },
       });
@@ -351,7 +356,7 @@ describe('Section Routes', () => {
 
       expect(res.body.id).toBe(section.id);
       expect(res.body.title).toBe('Warm Up');
-      expect(res.body.content).toBe('Stretching exercises');
+      expect(res.body.markdownContent).toBe('Stretching exercises');
       expect(res.body.videoUrl).toBe('https://example.com/video.mp4');
     });
 

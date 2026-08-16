@@ -4,6 +4,8 @@ export interface SectionListParams {
   page?: number
   limit?: number
   search?: string
+  orderBy?: 'title' | 'createdAt' | 'orderIndex'
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface SectionListResult {
@@ -65,10 +67,14 @@ export async function findAllSections(
       : {}),
   }
 
+  const orderBy = params.orderBy
+    ? ({ [params.orderBy]: params.sortOrder ?? 'asc' } as const)
+    : ({ orderIndex: 'asc' } as const)
+
   const [sections, total] = await Promise.all([
     prisma.section.findMany({
       where,
-      orderBy: { orderIndex: 'asc' },
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
     }),
