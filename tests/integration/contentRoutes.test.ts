@@ -39,9 +39,14 @@ describe('Content Routes', () => {
   let testSectionId: string;
 
   beforeEach(async () => {
-    // Clear content-related data before each test
+    // Clear content-related data before each test (children before parents
+    // to respect FK constraints, plus all related tables for full isolation)
+    await prisma.userProgress.deleteMany();
+    await prisma.videoMetadata.deleteMany();
     await prisma.section.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.user.deleteMany();
 
     // Create a test module and section to use for content operations
     const module = await prisma.module.create({

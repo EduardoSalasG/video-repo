@@ -95,9 +95,12 @@ async function createVideoWithSection(
 
 describe('Search Routes', () => {
   beforeEach(async () => {
-    // Clear data before each test
+    // Clear data before each test (children before parents to respect FK
+    // constraints, plus all related tables for full isolation)
+    await prisma.userProgress.deleteMany()
     await prisma.videoMetadata.deleteMany()
     await prisma.section.deleteMany()
+    await prisma.session.deleteMany()
     await prisma.module.deleteMany()
     await prisma.user.deleteMany()
   })

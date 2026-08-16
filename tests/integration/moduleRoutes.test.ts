@@ -36,7 +36,14 @@ async function createToken(role: string): Promise<string> {
 
 describe('Module Routes', () => {
   beforeEach(async () => {
+    // Clean up in child-first order so FK constraints are respected and
+    // data left behind by other test files does not interfere.
+    await prisma.userProgress.deleteMany();
+    await prisma.videoMetadata.deleteMany();
+    await prisma.section.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {

@@ -39,10 +39,14 @@ describe('Progress Routes', () => {
   let testSectionId: string;
 
   beforeEach(async () => {
-    // Clear progress-related data before each test
+    // Clear progress-related data before each test (children before parents
+    // to respect FK constraints, plus all related tables for full isolation)
     await prisma.userProgress.deleteMany();
+    await prisma.videoMetadata.deleteMany();
     await prisma.section.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.user.deleteMany();
 
     // Create a test module and section to use for progress operations
     const module = await prisma.module.create({
