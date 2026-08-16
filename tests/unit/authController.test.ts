@@ -8,22 +8,19 @@ import { z } from 'zod';
 
 // Test ZodError properties
 describe('ZodError properties', () => {
-  it('should have errors property', () => {
+  it('should have issues property', () => {
     const zodError = new z.ZodError([
       {
-        code: z.ZodErrorCode.invalid_type,
+        code: 'invalid_type',
         expected: 'string',
         received: 'undefined',
         path: [],
         message: 'Required',
       }
     ]);
-    // Log for debugging
-    console.log('zodError:', zodError);
-    console.log('zodError.errors:', zodError.errors);
-    console.log('Object.keys(zodError):', Object.keys(zodError));
-    expect(zodError.errors).toBeDefined();
-    expect(Array.isArray(zodError.errors)).toBe(true);
+    expect(zodError.issues).toBeDefined();
+    expect(Array.isArray(zodError.issues)).toBe(true);
+    expect(zodError.issues.length).toBe(1);
   });
 });
 

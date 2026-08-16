@@ -7,6 +7,15 @@ import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { User } from '../types';
 
+function isZodError(error: unknown): error is z.ZodError {
+  return error instanceof z.ZodError;
+}
+
+function zodErrorDetails(error: z.ZodError): unknown {
+  return (error as z.ZodError & { issues?: unknown }).issues ??
+    (error as z.ZodError & { errors?: unknown }).errors;
+}
+
 /**
  * Register a new user
  */
@@ -61,22 +70,14 @@ export async function register(req: Request, res: Response): Promise<void> {
 
     // Return response
     res.status(201).json({
-      accessToken: 'faketoken',
+      accessToken,
       user,
     });
   } catch (error) {
     console.error('Validation error in register:', error);
-    console.error('error.constructor:', error.constructor);
-    console.error('error.constructor.name:', error.constructor.name);
-    console.error('Object.keys(error):', Object.keys(error));
-    console.error('error.hasOwnProperty(\"errors\"):', error.hasOwnProperty('errors'));
-    console.error('error.__proto__:', error.__proto__);
-    console.error('Object.getOwnPropertyNames(error.__proto__):', Object.getOwnPropertyNames(error.__proto__));
-    if (error && 'errors' in error && Array.isArray(error.errors)) {
-      console.error('error.errors is array');
-      res.status(400).json({ error: error.errors });
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
     } else {
-      console.error('error.errors is not array or does not exist');
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -120,8 +121,8 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error('Validation error in login:', error);
-    if (error && error.errors && Array.isArray(error.errors)) {
-      res.status(400).json({ error: error.errors });
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
     } else {
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
@@ -175,8 +176,8 @@ export async function magicLink(req: Request, res: Response): Promise<void> {
     res.json({ message: 'If the email exists, a magic link has been sent.' });
   } catch (error) {
     console.error('Validation error in magicLink:', error);
-    if (error && error.errors && Array.isArray(error.errors)) {
-      res.status(400).json({ error: error.errors });
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
     } else {
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
