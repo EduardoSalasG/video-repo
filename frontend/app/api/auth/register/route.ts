@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { register } from '@/lib/api'
+import { ApiError } from '@/lib/http'
 import { setSessionCookie } from '@/lib/session'
 
 export async function POST(req: Request) {
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     await setSessionCookie(accessToken)
     return NextResponse.json({ user }, { status: 201 })
   } catch (err) {
-    const status = err instanceof Error && /401/.test(err.message) ? 401 : 500
+    const status = err instanceof ApiError && err.status === 401 ? 401 : 500
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Registration failed' }, { status })
   }
 }
