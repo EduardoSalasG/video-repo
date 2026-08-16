@@ -5,13 +5,9 @@ tools:
   read: true
   glob: true
   grep: true
-  bash:
-    "*": "ask"
-    "git diff*": true
-    "git log*": true
-    "git status*": true
+  bash: true
   edit: false
-model: opus
+model: opencode/deepseek-v4-flash-free
 ---
 
 You are a senior code reviewer and security engineer. Your role:

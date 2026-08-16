@@ -43,3 +43,10 @@ coverage/
 # Misc
 *.tgz
 .cache/
+
+# Uploaded media (runtime artifacts)
+uploads/
+
+# Local Node.js binaries and archives (used for the dev environment)
+node/
+node-v*

@@ -1,0 +1,184 @@
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import {
+  createSectionSchema,
+  updateSectionSchema,
+  sectionQuerySchema,
+} from '../validators/sectionValidators';
+import {
+  findAllSections,
+  findSectionById,
+  createSection,
+  updateSection,
+  deleteSection,
+} from '../models/section';
+
+function isZodError(error: unknown): error is z.ZodError {
+  return error instanceof z.ZodError;
+}
+
+function zodErrorDetails(error: z.ZodError): unknown {
+  return (error as z.ZodError & { issues?: unknown }).issues ??
+    (error as z.ZodError & { errors?: unknown }).errors;
+}
+
+function isPrismaNotFound(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: string }).code === 'P2025'
+  );
+}
+
+/**
+ * Get a paginated list of sections for a module
+ */
+export async function getSections(req: Request, res: Response): Promise<void> {
+  try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    }).strip();
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    const query = sectionQuerySchema.parse(req.query);
+    const result = await findAllSections(moduleIdParams.moduleId, query);
+    res.json(result);
+  } catch (error) {
+    console.error('Validation error in getSections:', error);
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+/**
+ * Get a single section by id
+ */
+export async function getSectionById(req: Request, res: Response): Promise<void> {
+  try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    }).strip();
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    const sectionIdSchema = z.object({
+      sectionId: z.string().min(1, 'Section id is required'),
+    }).strip();
+    const params = sectionIdSchema.parse(req.params);
+    const section = await findSectionById(params.sectionId, moduleIdParams.moduleId);
+    
+    if (!section) {
+      res.status(404).json({ error: 'Section not found' });
+      return;
+    }
+    
+    res.json(section);
+  } catch (error) {
+    console.error('Validation error in getSectionById:', error);
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+/**
+ * Create a new section
+ */
+export async function createSectionController(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    }).strip();
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    const parsedBody = createSectionSchema.parse({
+      ...req.body,
+      moduleId: moduleIdParams.moduleId,
+    });
+    const section = await createSection(parsedBody);
+    res.status(201).json(section);
+  } catch (error) {
+    console.error('Validation error in createSectionController:', error);
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+/**
+ * Update an existing section
+ */
+export async function updateSectionController(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    }).strip();
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    const paramsSchema = z.object({
+      sectionId: z.string().min(1, 'Section id is required'),
+    }).strip();
+    const params = paramsSchema.parse(req.params);
+    const parsedBody = updateSectionSchema.parse(req.body);
+    
+    const section = await updateSection(params.sectionId, parsedBody, moduleIdParams.moduleId);
+    res.json(section);
+  } catch (error) {
+    console.error('Validation error in updateSectionController:', error);
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
+    } else if (isPrismaNotFound(error)) {
+      res.status(404).json({ error: 'Section not found' });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+/**
+ * Delete a section by id
+ */
+export async function deleteSectionController(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const moduleIdSchema = z.object({
+      moduleId: z.string().min(1, 'Module id is required'),
+    }).strip();
+    const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    const paramsSchema = z.object({
+      sectionId: z.string().min(1, 'Section id is required'),
+    }).strip();
+    const params = paramsSchema.parse(req.params);
+    await deleteSection(params.sectionId, moduleIdParams.moduleId);
+    res.status(204).send();
+  } catch (error) {
+    console.error('Validation error in deleteSectionController:', error);
+    if (isZodError(error)) {
+      res.status(400).json({ error: zodErrorDetails(error) });
+    } else if (isPrismaNotFound(error)) {
+      res.status(404).json({ error: 'Section not found' });
+    } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
