@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --surface: #f5f4f2;
+  --surface-raised: #ffffff;
+  --ink: #1c1b1a;
+  --accent: #b3382c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #141312;
+    --surface-raised: #1f1e1c;
+    --ink: #f2f0ed;
+    --accent: #e06a5b;
+  }
+}
