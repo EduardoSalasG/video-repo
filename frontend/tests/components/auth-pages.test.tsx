@@ -15,6 +15,7 @@ describe('LoginForm', () => {
 
   it('submits credentials and redirects', async () => {
     const push = vi.fn()
+    vi.stubGlobal('useRouter', () => ({ push }))
     const { container } = render(<LoginForm />)
     const form = container.querySelector('form')!
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@b.com' } })
