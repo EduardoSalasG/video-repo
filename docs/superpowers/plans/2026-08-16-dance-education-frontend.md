@@ -2542,14 +2542,14 @@ git commit -m "feat(frontend): add error, not-found, loading surfaces and reduce
 - Consumes: root monorepo workflow, frontend workspace.
 - Produces: CI runs typecheck/lint/test/build for both workspaces.
 
-- [ ] **Step 1: Add `verify` script to frontend**
+- [x] **Step 1: Add `verify` script to frontend**
 
 In `frontend/package.json` scripts add:
 ```json
 "verify": "npm run typecheck && npm run lint && npm test"
 ```
 
-- [ ] **Step 2: Add frontend job to CI**
+- [x] **Step 2: Add frontend job to CI**
 
 Append to `.github/workflows/ci.yml`:
 ```yaml
@@ -2573,11 +2573,11 @@ Append to `.github/workflows/ci.yml`:
         run: npm test --workspace frontend
 ```
 
-- [ ] **Step 3: Write `frontend/README.md`**
+- [x] **Step 3: Write `frontend/README.md`**
 
 Cover: prerequisites (backend running, `NEXT_PUBLIC_API_URL`), `npm run dev --workspace frontend`, test/typecheck commands, seeding an instructor account.
 
-- [ ] **Step 4: Verify both workspaces**
+- [x] **Step 4: Verify both workspaces**
 
 Run from repo root: `npm run typecheck && npm run lint && npm test`
 Expected: all workspaces green.
