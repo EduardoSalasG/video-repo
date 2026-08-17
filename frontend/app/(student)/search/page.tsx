@@ -6,11 +6,7 @@ import SearchResults from '@/components/search/SearchResults'
 
 export const metadata: Metadata = { title: 'Search' }
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
-}) {
+export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { token } = await requireUser(['STUDENT', 'INSTRUCTOR', 'ADMIN'])
   const sp = await searchParams
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]?.[0] : sp[k])

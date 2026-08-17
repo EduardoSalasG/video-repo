@@ -5,12 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 const styles = ['MAMBO_ON2', 'CASINO', 'SENSUAL_BACHATA']
 const difficulties = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
-const types = [
-  'STEP_BREAKDOWN',
-  'COMBINATION',
-  'FULL_PATTERN',
-  'SHINES_SEQUENCE',
-]
+const types = ['STEP_BREAKDOWN', 'COMBINATION', 'FULL_PATTERN', 'SHINES_SEQUENCE']
 
 export default function SearchForm() {
   const router = useRouter()
@@ -32,15 +27,9 @@ export default function SearchForm() {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="space-y-6 rounded-xl bg-surface-raised p-4"
-    >
+    <form onSubmit={onSubmit} className="space-y-6 rounded-xl bg-surface-raised p-4">
       <div>
-        <label
-          htmlFor="search"
-          className="mb-1 block text-sm font-medium text-ink"
-        >
+        <label htmlFor="search" className="mb-1 block text-sm font-medium text-ink">
           Search lessons…
         </label>
         <input
@@ -52,10 +41,7 @@ export default function SearchForm() {
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label
-            htmlFor="style"
-            className="mb-1 block text-sm font-medium text-ink"
-          >
+          <label htmlFor="style" className="mb-1 block text-sm font-medium text-ink">
             Style
           </label>
           <select
@@ -73,10 +59,7 @@ export default function SearchForm() {
           </select>
         </div>
         <div>
-          <label
-            htmlFor="difficulty"
-            className="mb-1 block text-sm font-medium text-ink"
-          >
+          <label htmlFor="difficulty" className="mb-1 block text-sm font-medium text-ink">
             Difficulty
           </label>
           <select
@@ -94,10 +77,7 @@ export default function SearchForm() {
           </select>
         </div>
         <div>
-          <label
-            htmlFor="type"
-            className="mb-1 block text-sm font-medium text-ink"
-          >
+          <label htmlFor="type" className="mb-1 block text-sm font-medium text-ink">
             Type
           </label>
           <select
@@ -115,10 +95,7 @@ export default function SearchForm() {
           </select>
         </div>
       </div>
-      <button
-        type="submit"
-        className="w-full rounded-lg bg-accent px-4 py-2 font-medium text-white"
-      >
+      <button type="submit" className="w-full rounded-lg bg-accent px-4 py-2 font-medium text-white">
         Search
       </button>
     </form>
