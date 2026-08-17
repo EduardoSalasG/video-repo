@@ -9,7 +9,7 @@ export default function CompleteButton({ sectionId, completed, onComplete }: { s
 
   async function onClick() {
     setLoading(true)
-    await fetch(`/api/progress/${sectionId}/complete`, { method: 'PATCH' }).catch(() => {})
+    await fetch(`/api/proxy/sections/${sectionId}/complete`, { method: 'PATCH' }).catch(() => {})
     setDone(true)
     setLoading(false)
     onComplete()
