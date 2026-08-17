@@ -10,9 +10,9 @@ export const metadata: Metadata = { title: 'Module' }
 export default async function ModulePage({ params }: { params: Promise<{ moduleId: string }> }) {
   const { token } = await requireUser(['STUDENT', 'INSTRUCTOR', 'ADMIN'])
   const { moduleId } = await params
-  let module
+  let moduleData
   try {
-    module = await fetchModule(token, moduleId)
+    moduleData = await fetchModule(token, moduleId)
   } catch {
     notFound()
   }
@@ -20,11 +20,11 @@ export default async function ModulePage({ params }: { params: Promise<{ moduleI
   return (
     <div className="space-y-6">
       <Link href="/library" className="text-sm text-accent">← Library</Link>
-      <h1 className="text-3xl font-semibold tracking-tight">{module.title}</h1>
-      {module.description && <p>{module.description}</p>}
+      <h1 className="text-3xl font-semibold tracking-tight">{moduleData.title}</h1>
+      {moduleData.description && <p>{moduleData.description}</p>}
       <div className="space-y-2">
-        {(module.sections ?? []).map((s) => (
-          <SectionItem key={s.id} title={s.title} href={`/library/${module.id}/${s.id}`} completed={false} />
+        {(moduleData.sections ?? []).map((s) => (
+          <SectionItem key={s.id} title={s.title} href={`/library/${moduleData.id}/${s.id}`} completed={false} />
         ))}
       </div>
     </div>
