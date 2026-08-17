@@ -8,11 +8,15 @@ async function proxy(req: NextRequest, path: string, method: string) {
   const token = await getSessionToken()
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.text()
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
-  if (body) headers['Content-Type'] = req.headers.get('content-type') ?? 'application/json'
+  const contentType = req.headers.get('content-type') ?? ''
+  const isMultipart = contentType.includes('multipart/form-data')
 
-  const res = await fetch(`${base}/${path}${req.nextUrl.search}`, { method, headers, body })
+  const res = await fetch(`${base}/${path}${req.nextUrl.search}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, ...(contentType ? { 'Content-Type': contentType } : {}) },
+    body: req.method === 'GET' || req.method === 'HEAD' ? undefined : (isMultipart ? req.body : await req.text()),
+    ...(isMultipart ? { duplex: 'half' } : {}),
+  })
   const text = await res.text()
   return new NextResponse(text, {
     status: res.status,
