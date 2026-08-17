@@ -8,7 +8,7 @@ const STYLES = ['MAMBO_ON2', 'CASINO', 'SENSUAL_BACHATA']
 const DIFFICULTIES = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
 const TYPES = ['STEP_BREAKDOWN', 'COMBINATION', 'FULL_PATTERN', 'SHINES_SEQUENCE']
 
-export default function VideoMetadataForm({ moduleId, sectionId, initial }: { moduleId: string; sectionId: string; initial?: { id: string; primaryStyle: string; difficulty: string; videoType: string; tags: string[]; durationCounts?: number } | null }) {
+export default function VideoMetadataForm({ moduleId, sectionId, initial }: { moduleId: string; sectionId: string; initial?: { id: string; primaryStyle: string; difficulty: string; videoType: string; tags: string[]; steps: unknown[]; influences: unknown[]; durationCounts?: number } | null }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -19,12 +19,13 @@ export default function VideoMetadataForm({ moduleId, sectionId, initial }: { mo
     setError(null)
     const form = new FormData(e.currentTarget)
     const body = {
+      sectionId,
       primaryStyle: String(form.get('primaryStyle')),
       difficulty: String(form.get('difficulty')),
       videoType: String(form.get('videoType')),
       tags: String(form.get('tags') ?? '').split(',').map((t) => t.trim()).filter(Boolean),
-      steps: [],
-      influences: [],
+      steps: initial?.steps ?? [{}],
+      influences: initial?.influences ?? [],
       durationCounts: Number(form.get('durationCounts') ?? 0),
     }
     const path = `/api/proxy/modules/${moduleId}/sections/${sectionId}/video-metadata`
@@ -32,7 +33,18 @@ export default function VideoMetadataForm({ moduleId, sectionId, initial }: { mo
     setLoading(false)
     if (!res.ok) {
       const data = await res.json().catch(() => null)
-      setError(data?.error ?? 'Save failed')
+      let errorMessage = data?.error ?? 'Save failed'
+      if (Array.isArray(errorMessage)) {
+        errorMessage = errorMessage
+          .map(e => {
+            if (typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string') {
+              return e.message
+            }
+            return String(e)
+          })
+          .join(', ')
+      }
+      setError(errorMessage)
       return
     }
     router.refresh()
@@ -56,7 +68,7 @@ export default function VideoMetadataForm({ moduleId, sectionId, initial }: { mo
       </div>
       <label className="block">
         <span className="mb-1 block text-sm">Tags (comma-separated)</span>
-        <input name="tags" defaultValue={initial?.tags.join(', ')} className="w-full rounded-lg border border-ink/15 bg-surface-raised px-3 py-2" />
+        <input name="tags" defaultValue={initial?.tags?.join(', ') ?? ''} className="w-full rounded-lg border border-ink/15 bg-surface-raised px-3 py-2" />
       </label>
       <label className="block">
         <span className="mb-1 block text-sm">Duration counts</span>
