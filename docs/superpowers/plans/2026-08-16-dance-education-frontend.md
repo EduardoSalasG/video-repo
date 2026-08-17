@@ -2471,7 +2471,7 @@ Run the impeccable and apple-design guidance on the app surface; add error/empty
 - Consumes: existing pages/layouts.
 - Produces: friendly 404/error/loading surfaces; motion disabled under reduced motion.
 
-- [ ] **Step 1: Add motion + reduced-motion CSS**
+- [x] **Step 1: Add motion + reduced-motion CSS**
 
 Append to `frontend/app/globals.css`:
 ```css
@@ -2488,7 +2488,7 @@ Append to `frontend/app/globals.css`:
 }
 ```
 
-- [ ] **Step 2: Add error surfaces**
+- [x] **Step 2: Add error surfaces**
 
 `frontend/app/not-found.tsx`: centered message "Page not found" with a link back to `/library`.
 
@@ -2510,17 +2510,17 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
 
 `frontend/app/loading.tsx`: centered spinner (CSS pulse) with `aria-label="Loading"`.
 
-- [ ] **Step 3: Run the impeccable detector on the frontend**
+- [x] **Step 3: Run the impeccable detector on the frontend**
 
 Run: `cd frontend && npx impeccable detect src app`
 Review output; fix any flagged anti-patterns (overused font, nested cards, gray-on-color, etc.). Where a flagged pattern is intentional, add an inline ignore comment.
 
-- [ ] **Step 4: Typecheck + tests**
+- [x] **Step 4: Typecheck + tests**
 
 Run: `npm run typecheck --workspace frontend && npm test --workspace frontend`
 Expected: clean + PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/app frontend/src
