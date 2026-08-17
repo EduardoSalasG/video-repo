@@ -2595,27 +2595,27 @@ git commit -m "feat(ci): add frontend build, lint, and tests to CI"
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Start backend + frontend**
+- [x] **Step 1: Start backend + frontend**
 
 Run backend (`npm run dev --workspace backend`) and frontend (`npm run dev --workspace frontend`). Ensure Postgres is running (Docker: `docker run -d --name video-repo-pg -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=video_repo -p 5432:5432 postgres:16`) and schema pushed (`npx prisma db push --url "postgresql://postgres:admin@localhost:5432/video_repo"`).
 
-- [ ] **Step 2: Create an instructor + module**
+- [x] **Step 2: Create an instructor + module**
 
 Register an instructor via `curl -X POST localhost:3000/auth/register -d '{"email":"instr@test.com","username":"instr","firstName":"I","lastName":"N","password":"secret123","role":"INSTRUCTOR"}' -H 'Content-Type: application/json'`. Login, then create a module via the API with the returned token.
 
-- [ ] **Step 3: Walk the student flow**
+- [x] **Step 3: Walk the student flow**
 
 In the browser: sign in → `/library` shows the module → open it → open a section → video player renders (or "no video" state) → mark complete → `/progress` shows it.
 
-- [ ] **Step 4: Walk the admin flow**
+- [x] **Step 4: Walk the admin flow**
 
 In the browser: `/admin` → create a module → add a section → write content → save metadata → upload a small video → verify it appears on the student side.
 
-- [ ] **Step 5: Fix any integration issues found**
+- [x] **Step 5: Fix any integration issues found**
 
 Adjust routes/proxy/mappings (search result links, progress titles) as discovered. Re-run typecheck + tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A

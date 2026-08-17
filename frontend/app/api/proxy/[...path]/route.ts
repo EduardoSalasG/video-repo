@@ -18,6 +18,7 @@ async function proxy(req: NextRequest, path: string, method: string) {
     ...(isMultipart ? { duplex: 'half' } : {}),
   })
   const text = await res.text()
+  if (res.status === 204) return new NextResponse(null, { status: 204 })
   return new NextResponse(text, {
     status: res.status,
     headers: { 'Content-Type': res.headers.get('content-type') ?? 'application/json' },

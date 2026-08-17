@@ -20,6 +20,9 @@ export default function VideoUpload({ moduleId, sectionId }: { moduleId: string;
     }
     const body = new FormData()
     body.append('video', file)
+    // Backend `upload-video` always creates a metadata record, but `sectionId`
+    // is unique — so clear any existing metadata first (404 means none yet).
+    await fetch(`/api/proxy/modules/${moduleId}/sections/${sectionId}/video-metadata`, { method: 'DELETE' }).catch(() => {})
     const res = await fetch(`/api/proxy/modules/${moduleId}/sections/${sectionId}/upload-video`, { method: 'POST', body })
     setLoading(false)
     setStatus(res.ok ? 'Upload complete.' : `Upload failed (${res.status}).`)

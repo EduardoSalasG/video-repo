@@ -11,7 +11,7 @@ export default function SectionView({ section, metadata, lastPositionSeconds, co
       {section.videoUrl && <VideoPlayer src={section.videoUrl} metadata={metadata} />}
       <ProgressBar lastPositionSeconds={lastPositionSeconds} />
       <div className="flex items-center gap-3">
-        <CompleteButton sectionId={section.id} completed={completed} onComplete={() => {}} />
+        <CompleteButton sectionId={section.id} completed={completed} />
       </div>
       {section.markdownContent && (
         <article className="prose prose-slate max-w-none rounded-2xl bg-surface-raised p-6">
