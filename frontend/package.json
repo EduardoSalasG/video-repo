@@ -13,6 +13,7 @@
     "verify": "npm run typecheck && npm run lint && npm test"
   },
   "dependencies": {
+    "marked": "^18.0.11",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -24,6 +25,7 @@
     "@tailwindcss/typography": "^0.5.20",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
+    "@types/marked": "^5.0.2",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

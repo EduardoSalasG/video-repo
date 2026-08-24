@@ -2,6 +2,7 @@ import VideoPlayer from '@/components/video/VideoPlayer'
 import CompleteButton from './CompleteButton'
 import ProgressBar from './ProgressBar'
 import type { Section, VideoMetadata } from '@/types'
+import * as marked from 'marked'
 
 export default function SectionView({ section, metadata, lastPositionSeconds, completed }: { section: Section; metadata?: VideoMetadata | null; lastPositionSeconds: number | null; completed: boolean }) {
   return (
@@ -15,7 +16,7 @@ export default function SectionView({ section, metadata, lastPositionSeconds, co
       </div>
       {section.markdownContent && (
         <article className="prose prose-slate max-w-none rounded-2xl bg-surface-raised p-6">
-          <pre className="whitespace-pre-wrap font-sans">{section.markdownContent}</pre>
+          <div dangerouslySetInnerHTML={{ __html: marked.parse(section.markdownContent) }} />
         </article>
       )}
     </div>
