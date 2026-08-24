@@ -60,7 +60,7 @@ export default function VideoMetadataForm({ moduleId, sectionId, initial }: { mo
         ].map((f) => (
           <label key={f.name} className="block">
             <span className="mb-1 block text-sm">{f.label}</span>
-            <select name={f.name} defaultValue={f.initial} className="w-full rounded-lg border border-ink/15 bg-surface-raised px-3 py-2">
+            <select name={f.name} defaultValue={f.initial ?? ''} className="w-full rounded-lg border border-ink/15 bg-surface-raised px-3 py-2">
               {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </label>

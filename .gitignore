@@ -49,4 +49,4 @@ uploads/
 
 # Local Node.js binaries and archives (used for the dev environment)
 node/
-node-v*
+node-v*db/postgres/

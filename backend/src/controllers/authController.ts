@@ -116,13 +116,22 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Generate JWT token
+    // Generate JWT token (1 hour expiry)
     const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-for-development-only';
     const accessToken = generateToken({ userId: user.id }, jwtSecret, '1h');
 
-    // Return response (without passwordHash)
-    const userWithoutPassword = { ...user } as Record<string, unknown>
-    delete userWithoutPassword.passwordHash
+    // Set the httpOnly cookie that the frontend reads
+    res.cookie('video_repo_token', accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 1000, // 1 hour – matches token expiry
+    });
+
+    // Return user data (without passwordHash) – optional, but kept for compatibility
+    const userWithoutPassword = { ...user } as Record<string, unknown>;
+    delete userWithoutPassword.passwordHash;
+
     res.json({
       accessToken,
       user: userWithoutPassword,

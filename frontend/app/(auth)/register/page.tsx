@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: 'Create account' }
 
 export default function RegisterPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" suppressHydrationWarning={true}>
       <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
       <RegisterForm />
       <p className="text-sm">

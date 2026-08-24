@@ -7,7 +7,8 @@ import {
 } from '../validators/sectionValidators';
 import {
   findAllSections,
-  findSectionById, findSectionByIdOnly,
+  findSectionById,
+  findSectionByIdOnly,
   createSection,
   updateSection,
   deleteSection,
@@ -145,11 +146,6 @@ export async function updateSectionController(
     } else if (isPrismaNotFound(error)) {
       res.status(404).json({ error: 'Section not found' });
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-}
 /**
  * Get a section by its ID only (used by the search results enrichment).
  */
@@ -173,6 +169,11 @@ export async function getSectionByIdOnlyController(
     if (isZodError(error)) {
       res.status(400).json({ error: zodErrorDetails(error) });
     } else {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
     }

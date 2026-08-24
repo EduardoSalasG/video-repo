@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { requireUser } from '@/lib/user'
 import { searchVideos } from '@/lib/api'
-import { resolveSectionRefs } from '@/lib/links'
 import SearchForm from '@/components/search/SearchForm'
 import SearchResults from '@/components/search/SearchResults'
 
@@ -21,20 +20,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     limit: 12,
   })
 
-  const refs = await resolveSectionRefs(
-    token,
-    data.videoMetadata.map((v) => v.sectionId)
-  )
-  const sectionHrefs = new Map<string, string>()
-  for (const ref of refs.values()) {
-    sectionHrefs.set(ref.sectionId, `/library/${ref.moduleId}/${ref.sectionId}`)
-  }
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight">Search</h1>
       <SearchForm />
-      <SearchResults results={data.videoMetadata} sectionHrefs={sectionHrefs} />
+      <SearchResults results={data.videoMetadata} />
     </div>
   )
 }

@@ -30,7 +30,7 @@ export default async function AdminModulePage({ params }: { params: Promise<{ mo
       <h1 className="text-3xl font-semibold tracking-tight">{modData.title}</h1>
       <div className="flex items-center justify-between">
         <h2 className="mb-4 text-xl font-semibold">Edit module</h2>
-        <DeleteButton id={moduleId} onDelete={handleDeleteModule} />
+        <DeleteButton id={moduleId} />
       </div>
       <section className="rounded-2xl bg-surface-raised p-6">
         <h2 className="mb-4 text-xl font-semibold">Sections</h2>

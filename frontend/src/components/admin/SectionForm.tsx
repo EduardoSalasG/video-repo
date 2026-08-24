@@ -15,10 +15,19 @@ export default function SectionForm({ moduleId, id, initial }: { moduleId: strin
     setLoading(true)
     setError(null)
     const form = new FormData(e.currentTarget)
+    // Parse orderIndex safely
+    const orderIndexRaw = form.get('orderIndex')
+    let orderIndex: number
+    if (orderIndexRaw === null || orderIndexRaw === undefined) {
+      orderIndex = 0
+    } else {
+      const parsed = parseInt(String(orderIndexRaw), 10)
+      orderIndex = isNaN(parsed) ? 0 : parsed
+    }
     const body = JSON.stringify({
       title: String(form.get('title')),
       description: String(form.get('description') ?? ''),
-      orderIndex: Number(form.get('orderIndex') ?? 0),
+      orderIndex,
       videoUrl: String(form.get('videoUrl') ?? ''),
     })
     const path = id ? `/api/proxy/modules/${moduleId}/sections/${id}` : `/api/proxy/modules/${moduleId}/sections`
@@ -26,7 +35,9 @@ export default function SectionForm({ moduleId, id, initial }: { moduleId: strin
     setLoading(false)
     if (!res.ok) {
       const data = await res.json().catch(() => null)
-      setError(data?.error ?? 'Save failed')
+      console.error('SectionForm save error:', data)
+      const errorMessage = data?.error ?? 'Save failed'
+      setError(errorMessage)
       return
     }
     router.push(`/admin/modules/${moduleId}`)

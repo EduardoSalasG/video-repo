@@ -3,7 +3,7 @@ import { authenticateUser } from '../middleware/auth'
 import { requireInstructor } from '../middleware/role'
 import {
   getSections,
-  getSectionById,
+  getSectionById, getSectionByIdOnlyController,
   createSectionController,
   updateSectionController,
   deleteSectionController,
@@ -19,5 +19,6 @@ router.get('/modules/:moduleId/sections/:sectionId', authenticateUser, getSectio
 router.post('/modules/:moduleId/sections', authenticateUser, requireInstructor, createSectionController)
 router.patch('/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, updateSectionController)
 router.delete('/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, deleteSectionController)
+router.get("/section/:sectionId", authenticateUser, getSectionByIdOnlyController)
 
 export default router

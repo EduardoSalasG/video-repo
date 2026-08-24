@@ -4,7 +4,7 @@ import prisma from '../config/database'
 
 /**
  * JWT Authentication Middleware
- * Verifies JWT token and attaches user to request
+ * Verifies JWT token from cookie or Authorization header and attaches user to request
  */
 export async function authenticateUser(
   req: Request,
@@ -12,16 +12,17 @@ export async function authenticateUser(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Get token from Authorization header
-    const authHeader = req.headers.authorization
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'Unauthorized: No token provided' })
-      return
+    // Get token from cookie first (httpOnly cookie set by login)
+    let token = req.cookies?.video_repo_token
+
+    // If not found in cookie, try Authorization header (fallback for other clients)
+    if (!token) {
+      const authHeader = req.headers.authorization
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7) // Remove 'Bearer ' prefix
+      }
     }
 
-    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-    
     if (!token) {
       res.status(401).json({ error: 'Unauthorized: No token provided' })
       return

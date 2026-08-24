@@ -137,3 +137,6 @@ export async function updateSection(id: string, data: UpdateSectionInput, module
 export async function deleteSection(id: string, moduleId: string) {
   return prisma.section.delete({ where: { id, moduleId } })
 }
+export async function findSectionByIdOnly(id: string) {
+  return prisma.section.findUnique({ where: { id } });
+}

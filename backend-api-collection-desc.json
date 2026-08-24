@@ -1,0 +1,575 @@
+{
+  "info": {
+    "_postman_id": "c5d9f5c5-9f0b-4b5b-9c5b-5f5c5b5c5b5c",
+    "name": "Dance Education Platform Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1234567"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "POST /auth/register",
+          "description": "Register a new user",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /auth/login",
+          "description": "Authenticate user and return token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /auth/me",
+          "description": "Get current authenticated user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /auth/magic-link",
+          "description": "Send magic link for authentication",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/magic-link",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "magic-link"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "content",
+      "item": [
+        {
+          "name": "GET /modules/:moduleId/sections/:sectionId/content",
+          "description": "Get markdown content for a section",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId/content",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId",
+                "content"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /modules/:moduleId/sections/:sectionId/content",
+          "description": "Update markdown content for a section",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId/content",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId",
+                "content"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "module",
+      "item": [
+        {
+          "name": "GET /modules/",
+          "description": "List all module",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /modules/:id",
+          "description": "Get a specific module by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /modules/",
+          "description": "Create a new module",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /modules/:id",
+          "description": "Update an existing module",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /modules/:id",
+          "description": "Delete a module",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "progress",
+      "item": [
+        {
+          "name": "GET /sections/:sectionId/progress",
+          "description": "Get progress for a section or all progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sections/:sectionId/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sections",
+                ":sectionId",
+                "progress"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /sections/:sectionId/progress",
+          "description": "Upsert progress for a section",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sections/:sectionId/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sections",
+                ":sectionId",
+                "progress"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /sections/:sectionId/progress/complete",
+          "description": "Mark a section as complete for the current user",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sections/:sectionId/progress/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sections",
+                ":sectionId",
+                "progress",
+                "complete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /progress",
+          "description": "Get progress for a section or all progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "progress"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "search",
+      "item": [
+        {
+          "name": "GET /search",
+          "description": "Search video metadata with filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "search"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "section",
+      "item": [
+        {
+          "name": "GET /modules/:moduleId/sections",
+          "description": "GET /modules/:moduleId/sections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /modules/:moduleId/sections/:sectionId",
+          "description": "GET /modules/:moduleId/sections/:sectionId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /modules/:moduleId/sections",
+          "description": "POST /modules/:moduleId/sections",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /modules/:moduleId/sections/:sectionId",
+          "description": "PATCH /modules/:moduleId/sections/:sectionId",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /modules/:moduleId/sections/:sectionId",
+          "description": "DELETE /modules/:moduleId/sections/:sectionId",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "video",
+      "item": [
+        {
+          "name": "GET /modules/:moduleId/sections/:sectionId/video-metadata",
+          "description": "Get video metadata for a section",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId/video-metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId",
+                "video-metadata"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /modules/:moduleId/sections/:sectionId/video-metadata",
+          "description": "Create video metadata for a section",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId/video-metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId",
+                "video-metadata"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /modules/:moduleId/sections/:sectionId/video-metadata",
+          "description": "Update video metadata for a section",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId/video-metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId",
+                "video-metadata"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /modules/:moduleId/sections/:sectionId/video-metadata",
+          "description": "Delete video metadata for a section",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId/video-metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId",
+                "video-metadata"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /modules/:moduleId/sections/:sectionId/upload-video",
+          "description": "Upload a video file for a section",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/modules/:moduleId/sections/:sectionId/upload-video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "modules",
+                ":moduleId",
+                "sections",
+                ":sectionId",
+                "upload-video"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

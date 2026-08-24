@@ -19,6 +19,7 @@ export default function LoginForm() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: form.get('email'), password: form.get('password') }),
+      credentials: 'include', // send cookies (important for cross-origin)
     })
     const data = await res.json().catch(() => null)
     setLoading(false)
@@ -36,7 +37,7 @@ export default function LoginForm() {
       <Input label="Password" name="password" type="password" required autoComplete="current-password" />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Signing in…' : 'Sign in'}
+        {loading ? 'Signing in.' : 'Sign in'}
       </Button>
     </form>
   )
