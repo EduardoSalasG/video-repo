@@ -8,6 +8,7 @@ import videoRoutes from './routes/videoRoutes';
 import contentRoutes from './routes/contentRoutes';
 import searchRoutes from './routes/searchRoutes';
 import progressRoutes from './routes/progressRoutes';
+import courseRoutes from './routes/courseRoutes';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/auth', authRoutes);
 app.use('/modules', moduleRoutes);
+app.use('/courses', courseRoutes);
 app.use('/', sectionRoutes);
 app.use('/', videoRoutes);
 app.use('/', contentRoutes);
