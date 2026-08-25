@@ -4,12 +4,14 @@ export const createModuleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   orderIndex: z.number().int().nonnegative().optional(),
+  courseId: z.string().min(1, 'Course ID is required'),
 })
 
 export const updateModuleSchema = z.object({
   title: z.string().min(1, 'Title is required').optional(),
   description: z.string().nullable().optional(),
   orderIndex: z.number().int().nonnegative().optional(),
+  courseId: z.string().min(1, 'Course ID is required').optional(),
 })
 
 export const moduleQuerySchema = z.object({

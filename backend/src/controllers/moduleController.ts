@@ -6,13 +6,7 @@ import {
   moduleQuerySchema,
   moduleIdSchema,
 } from '../validators/moduleValidators';
-import {
-  findAllModules,
-  findModuleById,
-  createModule,
-  updateModule,
-  deleteModule,
-} from '../models/module';
+import { ModuleService } from '../services/ModuleService';
 
 function isZodError(error: unknown): error is z.ZodError {
   return error instanceof z.ZodError;
@@ -37,7 +31,7 @@ function isPrismaNotFound(error: unknown): boolean {
 export async function getModules(req: Request, res: Response): Promise<void> {
   try {
     const query = moduleQuerySchema.parse(req.query);
-    const result = await findAllModules(query);
+    const result = await ModuleService.findAllModules(query);
     res.json(result);
   } catch (error) {
     console.error('Validation error in getModules:', error);
@@ -56,7 +50,7 @@ export async function getModules(req: Request, res: Response): Promise<void> {
 export async function getModuleById(req: Request, res: Response): Promise<void> {
   try {
     const params = moduleIdSchema.parse(req.params);
-    const module = await findModuleById(params.id);
+    const module = await ModuleService.findModuleById(params.id);
 
     if (!module) {
       res.status(404).json({ error: 'Module not found' });
@@ -84,7 +78,7 @@ export async function createModuleController(
 ): Promise<void> {
   try {
     const parsedBody = createModuleSchema.parse(req.body);
-    const module = await createModule(parsedBody);
+    const module = await ModuleService.createModule(parsedBody);
     res.status(201).json(module);
   } catch (error) {
     console.error('Validation error in createModuleController:', error);
@@ -108,7 +102,7 @@ export async function updateModuleController(
     const params = moduleIdSchema.parse(req.params);
     const parsedBody = updateModuleSchema.parse(req.body);
 
-    const module = await updateModule(params.id, parsedBody);
+    const module = await ModuleService.updateModule(params.id, parsedBody);
     res.json(module);
   } catch (error) {
     console.error('Validation error in updateModuleController:', error);
@@ -132,7 +126,7 @@ export async function deleteModuleController(
 ): Promise<void> {
   try {
     const params = moduleIdSchema.parse(req.params);
-    await deleteModule(params.id);
+    await ModuleService.deleteModule(params.id);
     res.status(204).send();
   } catch (error) {
     console.error('Validation error in deleteModuleController:', error);
