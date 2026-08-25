@@ -32,12 +32,24 @@ model Session {
   createdAt DateTime @default(now())
 }
 
+// Course model
+model Course {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  modules   Module[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Module model
 model Module {
   id            String   @id @default(uuid())
   title         String
   description   String?
   orderIndex    Int      @default(0)
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
   sections      Section[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -109,6 +121,7 @@ enum PrimaryStyle {
   MAMBO_ON2
   CASINO
   SENSUAL_BACHATA
+  MODERN_BACHATA
 }
 
 enum VideoType {

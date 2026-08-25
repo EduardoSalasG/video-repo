@@ -4,7 +4,8 @@ import {
   createModuleSchema,
   updateModuleSchema,
   moduleQuerySchema,
-  moduleIdSchema,
+  courseIdSchema,
+  courseModuleIdsSchema,
 } from '../validators/moduleValidators';
 import { ModuleService } from '../services/ModuleService';
 
@@ -26,12 +27,16 @@ function isPrismaNotFound(error: unknown): boolean {
 }
 
 /**
- * Get a paginated list of modules
+ * Get a paginated list of modules for a course
  */
 export async function getModules(req: Request, res: Response): Promise<void> {
   try {
+    const courseIdParams = courseIdSchema.parse(req.params); // Validate courseId
     const query = moduleQuerySchema.parse(req.query);
-    const result = await ModuleService.findAllModules(query);
+    const result = await ModuleService.findAllModules({
+      ...query,
+      courseId: courseIdParams.courseId,
+    });
     res.json(result);
   } catch (error) {
     console.error('Validation error in getModules:', error);
@@ -49,14 +54,18 @@ export async function getModules(req: Request, res: Response): Promise<void> {
  */
 export async function getModuleById(req: Request, res: Response): Promise<void> {
   try {
-    const params = moduleIdSchema.parse(req.params);
-    const module = await ModuleService.findModuleById(params.id);
-
-    if (!module) {
-      res.status(404).json({ error: 'Module not found' });
-      return;
+    const params = courseModuleIdsSchema.parse(req.params); // Validate both courseId and moduleId
+    const module = await ModuleService.findModuleById(params.moduleId);
+    
+    // Additional validation: ensure module belongs to course
+    if (module && module.courseId !== params.courseId) {
+      return res.status(404).json({ error: 'Module not found in course' });
     }
-
+    
+    if (!module) {
+      return res.status(404).json({ error: 'Module not found' });
+    }
+    
     res.json(module);
   } catch (error) {
     console.error('Validation error in getModuleById:', error);
@@ -77,8 +86,12 @@ export async function createModuleController(
   res: Response
 ): Promise<void> {
   try {
+    const courseIdParams = courseIdSchema.parse(req.params); // Validate courseId
     const parsedBody = createModuleSchema.parse(req.body);
-    const module = await ModuleService.createModule(parsedBody);
+    const module = await ModuleService.createModule({
+      ...parsedBody,
+      courseId: courseIdParams.courseId,
+    });
     res.status(201).json(module);
   } catch (error) {
     console.error('Validation error in createModuleController:', error);
@@ -91,7 +104,7 @@ export async function createModuleController(
   }
 }
 
-/**
+/** 
  * Update an existing module
  */
 export async function updateModuleController(
@@ -99,11 +112,14 @@ export async function updateModuleController(
   res: Response
 ): Promise<void> {
   try {
-    const params = moduleIdSchema.parse(req.params);
+    const params = courseModuleIdsSchema.parse(req.params); // Validate both courseId and moduleId
     const parsedBody = updateModuleSchema.parse(req.body);
-
-    const module = await ModuleService.updateModule(params.id, parsedBody);
-    res.json(module);
+    
+    const module = await ModuleService.updateModule(params.moduleId, {
+      ...parsedBody,
+      courseId: params.courseId, // This will validate course exists
+    });
+    res.status(200).json(module);
   } catch (error) {
     console.error('Validation error in updateModuleController:', error);
     if (isZodError(error)) {
@@ -125,8 +141,8 @@ export async function deleteModuleController(
   res: Response
 ): Promise<void> {
   try {
-    const params = moduleIdSchema.parse(req.params);
-    await ModuleService.deleteModule(params.id);
+    const params = courseModuleIdsSchema.parse(req.params); // Validate both courseId and moduleId
+    await ModuleService.deleteModule(params.moduleId);
     res.status(204).send();
   } catch (error) {
     console.error('Validation error in deleteModuleController:', error);

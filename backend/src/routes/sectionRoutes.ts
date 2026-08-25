@@ -12,13 +12,13 @@ import {
 const router = Router()
 
 // All authenticated users can read sections
-router.get('/modules/:moduleId/sections', authenticateUser, getSections)
-router.get('/modules/:moduleId/sections/:sectionId', authenticateUser, getSectionById)
+router.get('/courses/:courseId/modules/:moduleId/sections', authenticateUser, getSections)
+router.get('/courses/:courseId/modules/:moduleId/sections/:sectionId', authenticateUser, getSectionById)
 
 // Only instructors and admins can write sections
-router.post('/modules/:moduleId/sections', authenticateUser, requireInstructor, createSectionController)
-router.patch('/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, updateSectionController)
-router.delete('/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, deleteSectionController)
+router.post('/courses/:courseId/modules/:moduleId/sections', authenticateUser, requireInstructor, createSectionController)
+router.patch('/courses/:courseId/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, updateSectionController)
+router.delete('/courses/:courseId/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, deleteSectionController)
 router.get("/section/:sectionId", authenticateUser, getSectionByIdOnlyController)
 
 export default router

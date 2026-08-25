@@ -19,12 +19,13 @@ function zodErrorDetails(error: z.ZodError): unknown {
  * Builds a dynamic Prisma `where` clause based on the provided query params:
  * - `search` matches the related section title/description and video tags
  * - `primaryStyle`, `difficulty`, `videoType` filter by the corresponding enums
+ * - `courseId` filters by the course that the section's module belongs to
  * - `page`/`limit` control pagination
  */
 export async function searchVideos(req: Request, res: Response): Promise<void> {
   try {
     const query = searchQuerySchema.parse(req.query)
-    const { search, primaryStyle, difficulty, videoType, page, limit } = query
+    const { search, primaryStyle, difficulty, videoType, courseId, page, limit } = query
 
     const filters: Prisma.VideoMetadataWhereInput[] = []
 
@@ -48,6 +49,17 @@ export async function searchVideos(req: Request, res: Response): Promise<void> {
 
     if (videoType) {
       filters.push({ videoType })
+    }
+
+    // Add courseId filtering: filter by course that the section's module belongs to
+    if (courseId) {
+      filters.push({
+        section: {
+          module: {
+            courseId: courseId
+          }
+        }
+      })
     }
 
     const where: Prisma.VideoMetadataWhereInput = filters.length > 0 ? { AND: filters } : {}

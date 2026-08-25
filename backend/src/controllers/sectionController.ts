@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import { ModuleService } from '../services';
 import {
   createSectionSchema,
   updateSectionSchema,
@@ -31,14 +32,35 @@ function isPrismaNotFound(error: unknown): boolean {
 }
 
 /**
+ * Validate that a module belongs to a course
+ */
+async function validateModuleBelongsToCourse(moduleId: string, courseId: string): Promise<void> {
+  const module = await ModuleService.findModuleById(moduleId);
+  if (!module) {
+    throw new Error('Module not found');
+  }
+  if (module.courseId !== courseId) {
+    throw new Error('Module does not belong to the specified course');
+  }
+}
+
+/**
  * Get a paginated list of sections for a module
  */
 export async function getSections(req: Request, res: Response): Promise<void> {
   try {
+    const courseIdSchema = z.object({
+      courseId: z.string().min(1, 'Course id is required'),
+    }).strip();
+    const courseIdParams = courseIdSchema.parse(req.params);
+    
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
     }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    // Validate that the module belongs to the course
+    await validateModuleBelongsToCourse(moduleIdParams.moduleId, courseIdParams.courseId);
     
     const query = sectionQuerySchema.parse(req.query);
     const result = await findAllSections(moduleIdParams.moduleId, query);
@@ -49,7 +71,7 @@ export async function getSections(req: Request, res: Response): Promise<void> {
       res.status(400).json({ error: zodErrorDetails(error) });
     } else {
       console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
     }
   }
 }
@@ -59,6 +81,11 @@ export async function getSections(req: Request, res: Response): Promise<void> {
  */
 export async function getSectionById(req: Request, res: Response): Promise<void> {
   try {
+    const courseIdSchema = z.object({
+      courseId: z.string().min(1, 'Course id is required'),
+    }).strip();
+    const courseIdParams = courseIdSchema.parse(req.params);
+    
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
     }).strip();
@@ -68,6 +95,10 @@ export async function getSectionById(req: Request, res: Response): Promise<void>
       sectionId: z.string().min(1, 'Section id is required'),
     }).strip();
     const params = sectionIdSchema.parse(req.params);
+    
+    // Validate that the module belongs to the course
+    await validateModuleBelongsToCourse(moduleIdParams.moduleId, courseIdParams.courseId);
+    
     const section = await findSectionById(params.sectionId, moduleIdParams.moduleId);
     
     if (!section) {
@@ -82,7 +113,7 @@ export async function getSectionById(req: Request, res: Response): Promise<void>
       res.status(400).json({ error: zodErrorDetails(error) });
     } else {
       console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
     }
   }
 }
@@ -95,10 +126,18 @@ export async function createSectionController(
   res: Response
 ): Promise<void> {
   try {
+    const courseIdSchema = z.object({
+      courseId: z.string().min(1, 'Course id is required'),
+    }).strip();
+    const courseIdParams = courseIdSchema.parse(req.params);
+    
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
     }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    // Validate that the module belongs to the course
+    await validateModuleBelongsToCourse(moduleIdParams.moduleId, courseIdParams.courseId);
     
     const parsedBody = createSectionSchema.parse({
       ...req.body,
@@ -112,7 +151,7 @@ export async function createSectionController(
       res.status(400).json({ error: zodErrorDetails(error) });
     } else {
       console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
     }
   }
 }
@@ -125,10 +164,18 @@ export async function updateSectionController(
   res: Response
 ): Promise<void> {
   try {
+    const courseIdSchema = z.object({
+      courseId: z.string().min(1, 'Course id is required'),
+    }).strip();
+    const courseIdParams = courseIdSchema.parse(req.params);
+    
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
     }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    // Validate that the module belongs to the course
+    await validateModuleBelongsToCourse(moduleIdParams.moduleId, courseIdParams.courseId);
     
     const paramsSchema = z.object({
       sectionId: z.string().min(1, 'Section id is required'),
@@ -146,7 +193,7 @@ export async function updateSectionController(
       res.status(404).json({ error: 'Section not found' });
     } else {
       console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
     }
   }
 }
@@ -187,10 +234,18 @@ export async function deleteSectionController(
   res: Response
 ): Promise<void> {
   try {
+    const courseIdSchema = z.object({
+      courseId: z.string().min(1, 'Course id is required'),
+    }).strip();
+    const courseIdParams = courseIdSchema.parse(req.params);
+    
     const moduleIdSchema = z.object({
       moduleId: z.string().min(1, 'Module id is required'),
     }).strip();
     const moduleIdParams = moduleIdSchema.parse(req.params);
+    
+    // Validate that the module belongs to the course
+    await validateModuleBelongsToCourse(moduleIdParams.moduleId, courseIdParams.courseId);
     
     const paramsSchema = z.object({
       sectionId: z.string().min(1, 'Section id is required'),
@@ -206,7 +261,7 @@ export async function deleteSectionController(
       res.status(404).json({ error: 'Section not found' });
     } else {
       console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
     }
   }
 }

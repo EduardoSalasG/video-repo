@@ -20,7 +20,8 @@
     "verify": "npm run typecheck && npm run lint && npm test",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "seed": "ts-node-dev prisma/seed.ts"
   },
   "repository": {
     "type": "git",

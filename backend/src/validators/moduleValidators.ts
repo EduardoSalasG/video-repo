@@ -4,14 +4,12 @@ export const createModuleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   orderIndex: z.number().int().nonnegative().optional(),
-  courseId: z.string().min(1, 'Course ID is required'),
 })
 
 export const updateModuleSchema = z.object({
   title: z.string().min(1, 'Title is required').optional(),
   description: z.string().nullable().optional(),
   orderIndex: z.number().int().nonnegative().optional(),
-  courseId: z.string().min(1, 'Course ID is required').optional(),
 })
 
 export const moduleQuerySchema = z.object({
@@ -22,4 +20,13 @@ export const moduleQuerySchema = z.object({
 
 export const moduleIdSchema = z.object({
   id: z.string().min(1, 'Module id is required'),
+})
+
+export const courseIdSchema = z.object({
+  courseId: z.string().min(1, 'Course ID is required'),
+})
+
+export const courseModuleIdsSchema = z.object({
+  courseId: z.string().min(1, 'Course ID is required'),
+  moduleId: z.string().min(1, 'Module ID is required'),
 })

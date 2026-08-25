@@ -11,6 +11,7 @@ import {
   getUserProgressBySection,
   findAllUserProgress,
 } from '../models/userProgress';
+import prisma from '../config/database';
 
 function isZodError(error: unknown): error is z.ZodError {
   return error instanceof z.ZodError;
@@ -61,7 +62,30 @@ export async function getProgress(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    res.json(progress);
+    // Enrich progress with course information
+    const section = await prisma.section.findUnique({
+      where: { id: progress.sectionId },
+      include: {
+        module: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const enrichedProgress = {
+      ...progress,
+      courseId: section?.module?.course?.id ?? null,
+      courseName: section?.module?.course?.name ?? null
+    };
+
+    res.json(enrichedProgress);
   } catch (error) {
     console.error('Validation error in getProgress:', error);
     if (isZodError(error)) {
@@ -146,7 +170,38 @@ export async function getAllProgress(req: Request, res: Response): Promise<void>
 
     const query = progressQuerySchema.parse(req.query);
     const result = await findAllUserProgress(userId, query);
-    res.json(result);
+
+    // Enrich each progress item with course information
+    const enrichedProgress = await Promise.all(
+      result.progress.map(async (progress) => {
+        const section = await prisma.section.findUnique({
+          where: { id: progress.sectionId },
+          include: {
+            module: {
+              include: {
+                course: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        return {
+          ...progress,
+          courseId: section?.module?.course?.id ?? null,
+          courseName: section?.module?.course?.name ?? null
+        };
+      })
+    );
+
+    res.json({
+      progress: enrichedProgress,
+      pagination: result.pagination
+    });
   } catch (error) {
     console.error('Validation error in getAllProgress:', error);
     if (isZodError(error)) {
