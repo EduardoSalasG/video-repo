@@ -43,57 +43,80 @@ describe('searchController', () => {
     vi.clearAllMocks()
   })
 
-  it('should return matching videos with pagination', async () => {
-    ;(prisma.videoMetadata.findMany as jest.Mock).mockResolvedValue([videoMetadataStub])
-    ;(prisma.videoMetadata.count as jest.Mock).mockResolvedValue(1)
-    mockReq.query = { search: 'basic', page: '1', limit: '10' }
+it('should return matching videos with pagination', async () => {
+      ;(prisma.videoMetadata.findMany as jest.Mock).mockResolvedValue([videoMetadataStub])
+      ;(prisma.videoMetadata.count as jest.Mock).mockResolvedValue(1)
+      mockReq.query = { search: 'basic', page: '1', limit: '10', courseId: 'course-1' }
 
-    await searchVideos(mockReq, mockRes)
+      await searchVideos(mockReq, mockRes)
 
-    expect(prisma.videoMetadata.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ AND: expect.any(Array) }),
-        skip: 0,
-        take: 10,
+      const findCall = (prisma.videoMetadata.findMany as jest.Mock).mock.calls[0][0]
+      expect(findCall.where).toEqual({
+        AND: [
+          {
+            OR: [
+              { section: { title: { contains: 'basic', mode: 'insensitive' as const } } },
+              { section: { description: { contains: 'basic', mode: 'insensitive' as const } } },
+              { tags: { has: 'basic' } },
+            ],
+          },
+          {
+            section: {
+              module: {
+                courseId: 'course-1'
+              }
+            }
+          }
+        ]
       })
-    )
-    expect(mockRes.json).toHaveBeenCalledWith({
-      videoMetadata: [videoMetadataStub],
-      pagination: { page: 1, limit: 10, total: 1, pages: 1 },
+      expect(findCall.skip).toBe(0)
+      expect(findCall.take).toBe(10)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        videoMetadata: [videoMetadataStub],
+        pagination: { page: 1, limit: 10, total: 1, pages: 1 },
+      })
     })
-  })
 
-  it('should build where clause with keyword and all filters', async () => {
-    ;(prisma.videoMetadata.findMany as jest.Mock).mockResolvedValue([])
-    ;(prisma.videoMetadata.count as jest.Mock).mockResolvedValue(0)
-    mockReq.query = {
-      search: 'salsa',
-      primaryStyle: 'CASINO',
-      difficulty: 'INTERMEDIATE',
-      videoType: 'COMBINATION',
-      page: '2',
-      limit: '5',
-    }
+it('should build where clause with keyword and all filters', async () => {
+      ;(prisma.videoMetadata.findMany as jest.Mock).mockResolvedValue([])
+      ;(prisma.videoMetadata.count as jest.Mock).mockResolvedValue(0)
+      mockReq.query = {
+        search: 'salsa',
+        primaryStyle: 'CASINO',
+        difficulty: 'INTERMEDIATE',
+        videoType: 'COMBINATION',
+        courseId: 'course-1',
+        page: '2',
+        limit: '5',
+      }
 
-    await searchVideos(mockReq, mockRes)
+      await searchVideos(mockReq, mockRes)
 
-    const findCall = (prisma.videoMetadata.findMany as jest.Mock).mock.calls[0][0]
-    expect(findCall.skip).toBe(5)
-    expect(findCall.take).toBe(5)
-    expect(findCall.where.AND).toHaveLength(4)
-  })
+      const findCall = (prisma.videoMetadata.findMany as jest.Mock).mock.calls[0][0]
+      expect(findCall.skip).toBe(5)
+      expect(findCall.take).toBe(5)
+      // Should have 5 conditions in AND array: search, primaryStyle, difficulty, videoType, courseId
+      expect(findCall.where.AND).toHaveLength(5)
+    })
 
-  it('should omit keyword clause when no search term is provided', async () => {
-    ;(prisma.videoMetadata.findMany as jest.Mock).mockResolvedValue([])
-    ;(prisma.videoMetadata.count as jest.Mock).mockResolvedValue(0)
-    mockReq.query = { primaryStyle: 'MAMBO_ON2' }
+it('should omit keyword clause when no search term is provided', async () => {
+      ;(prisma.videoMetadata.findMany as jest.Mock).mockResolvedValue([])
+      ;(prisma.videoMetadata.count as jest.Mock).mockResolvedValue(0)
+      mockReq.query = { primaryStyle: 'MAMBO_ON2', courseId: 'course-1' }
 
-    await searchVideos(mockReq, mockRes)
+      await searchVideos(mockReq, mockRes)
 
-    const findCall = (prisma.videoMetadata.findMany as jest.Mock).mock.calls[0][0]
-    expect(findCall.where.AND).toHaveLength(1)
-    expect(findCall.where.AND[0]).toEqual({ primaryStyle: 'MAMBO_ON2' })
-  })
+      const findCall = (prisma.videoMetadata.findMany as jest.Mock).mock.calls[0][0]
+      expect(findCall.where.AND).toHaveLength(2)
+      expect(findCall.where.AND[0]).toEqual({ primaryStyle: 'MAMBO_ON2' })
+      expect(findCall.where.AND[1]).toEqual({
+        section: {
+          module: {
+            courseId: 'course-1'
+          }
+        }
+      })
+    })
 
   it('should use empty where clause when no filters are provided', async () => {
     ;(prisma.videoMetadata.findMany as jest.Mock).mockResolvedValue([])

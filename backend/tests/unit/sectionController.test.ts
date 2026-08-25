@@ -13,6 +13,8 @@ import {
   updateSection,
   deleteSection,
 } from '../../src/models/section';
+import { ModuleService } from '../../src/services/ModuleService';
+import { CourseService } from '../../src/services/CourseService';
 
 // Mock the section model
 vi.mock('../../src/models/section', () => {
@@ -24,6 +26,11 @@ vi.mock('../../src/models/section', () => {
     deleteSection: vi.fn(),
   };
 });
+
+// Mock ModuleService
+vi.mock('../../src/services/ModuleService');
+// Mock CourseService
+vi.mock('../../src/services/CourseService');
 
 import {
   findAllSections as findAllSectionsMock,
@@ -65,7 +72,9 @@ describe('sectionController', () => {
         sections: [sectionStub],
         pagination: { page: 1, limit: 10, total: 1, pages: 1 },
       });
-      mockReq.params = { moduleId: 'module1' };
+      // Mock ModuleService.findModuleById to return a module with the matching courseId
+      (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+      mockReq.params = { courseId: 'course-1', moduleId: 'module1' };
       mockReq.query = { page: '1', limit: '10' };
 
       await getSections(mockReq, mockRes);
@@ -78,7 +87,9 @@ describe('sectionController', () => {
     });
 
     it('should return 400 if query validation fails', async () => {
-      mockReq.params = { moduleId: 'module1' };
+      // Mock ModuleService.findModuleById
+      (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+      mockReq.params = { courseId: 'course-1', moduleId: 'module1' };
       mockReq.query = { page: '-1' };
 
       await getSections(mockReq, mockRes);
@@ -91,189 +102,272 @@ describe('sectionController', () => {
   });
 
 describe('getSectionById', () => {
-     it('should return a section when found', async () => {
-       (findSectionByIdMock as jest.Mock).mockResolvedValue(sectionStub);
-       mockReq.params = { sectionId: '1', moduleId: 'module1' };
+      it('should return a section when found', async () => {
+        (findSectionByIdMock as jest.Mock).mockResolvedValue(sectionStub);
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1', moduleId: 'module1' };
 
-       await getSectionById(mockReq, mockRes);
+        await getSectionById(mockReq, mockRes);
 
-       expect(findSectionByIdMock).toHaveBeenCalledWith('1', 'module1');
-       expect(mockRes.json).toHaveBeenCalledWith(sectionStub);
-     });
-
-     it('should return 404 when section is not found', async () => {
-       (findSectionByIdMock as jest.Mock).mockResolvedValue(null);
-       mockReq.params = { sectionId: '1', moduleId: 'module1' };
-
-       await getSectionById(mockReq, mockRes);
-
-       expect(mockRes.status).toHaveBeenCalledWith(404);
-       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
-     });
-
-     it('should return 400 if id param is missing', async () => {
-       mockReq.params = { moduleId: 'module1' };
-
-       await getSectionById(mockReq, mockRes);
-
-       expect(mockRes.status).toHaveBeenCalledWith(400);
-       expect(mockRes.json).toHaveBeenCalledWith(
-         expect.objectContaining({ error: expect.any(Array) })
-       );
-     });
-
-     it('should return 400 if moduleId param is missing', async () => {
-       mockReq.params = { sectionId: '1' };
-
-       await getSectionById(mockReq, mockRes);
-
-       expect(mockRes.status).toHaveBeenCalledWith(400);
-       expect(mockRes.json).toHaveBeenCalledWith(
-         expect.objectContaining({ error: expect.any(Array) })
-       );
-     });
-   });
-
-  describe('createSectionController', () => {
-    it('should create a section and return 201', async () => {
-      (createSectionMock as jest.Mock).mockResolvedValue(sectionStub);
-      mockReq.params = { moduleId: 'module1' };
-      mockReq.body = {
-        title: 'Introduction to Steps',
-        description: 'A beginner section',
-        orderIndex: 0,
-      };
-
-      await createSectionController(mockReq, mockRes);
-
-      expect(createSectionMock).toHaveBeenCalledWith({
-        moduleId: 'module1',
-        title: 'Introduction to Steps',
-        description: 'A beginner section',
-        orderIndex: 0,
-        videoUrl: undefined,
-        markdownContent: undefined,
+        expect(findSectionByIdMock).toHaveBeenCalledWith('1', 'module1');
+        expect(mockRes.json).toHaveBeenCalledWith(sectionStub);
       });
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.json).toHaveBeenCalledWith(sectionStub);
+
+      it('should return 404 when section is not found', async () => {
+        (findSectionByIdMock as jest.Mock).mockResolvedValue(null);
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1', moduleId: 'module1' };
+
+        await getSectionById(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(404);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
+      });
+
+      it('should return 400 if id param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', moduleId: 'module1' };
+
+        await getSectionById(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+
+      it('should return 400 if moduleId param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1' };
+
+        await getSectionById(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+
+      it('should return 400 if courseId param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { sectionId: '1', moduleId: 'module1' };
+
+        await getSectionById(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
     });
 
-    it('should return 400 if body validation fails', async () => {
-      mockReq.params = { moduleId: 'module1' };
-      mockReq.body = { title: '' };
+describe('createSectionController', () => {
+      it('should create a section and return 201', async () => {
+        (createSectionMock as jest.Mock).mockResolvedValue(sectionStub);
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', moduleId: 'module1' };
+        mockReq.body = {
+          title: 'Introduction to Steps',
+          description: 'A beginner section',
+          orderIndex: 0,
+        };
 
-      await createSectionController(mockReq, mockRes);
+        await createSectionController(mockReq, mockRes);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.any(Array) })
-      );
+        expect(createSectionMock).toHaveBeenCalledWith({
+          moduleId: 'module1',
+          title: 'Introduction to Steps',
+          description: 'A beginner section',
+          orderIndex: 0,
+          videoUrl: undefined,
+          markdownContent: undefined,
+        });
+        expect(mockRes.status).toHaveBeenCalledWith(201);
+        expect(mockRes.json).toHaveBeenCalledWith(sectionStub);
+      });
+
+      it('should return 400 if body validation fails', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', moduleId: 'module1' };
+        mockReq.body = { title: '' };
+
+        await createSectionController(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+
+      it('should return 400 if moduleId param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1' };
+
+        await createSectionController(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+
+      it('should return 400 if courseId param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { moduleId: 'module1' };
+
+        await createSectionController(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
     });
-  });
 
 describe('updateSectionController', () => {
-     it('should update a section and return 200', async () => {
-       const updated = { ...sectionStub, title: 'Updated Section' };
-       (updateSectionMock as jest.Mock).mockResolvedValue(updated);
-       mockReq.params = { sectionId: '1', moduleId: 'module1' };
-       mockReq.body = { title: 'Updated Section' };
+      it('should update a section and return 200', async () => {
+        const updated = { ...sectionStub, title: 'Updated Section' };
+        (updateSectionMock as jest.Mock).mockResolvedValue(updated);
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1', moduleId: 'module1' };
+        mockReq.body = { title: 'Updated Section' };
 
-       await updateSectionController(mockReq, mockRes);
+        await updateSectionController(mockReq, mockRes);
 
-       expect(updateSectionMock).toHaveBeenCalledWith('1', { title: 'Updated Section' }, 'module1');
-       expect(mockRes.json).toHaveBeenCalledWith(updated);
-     });
+        expect(updateSectionMock).toHaveBeenCalledWith('1', { title: 'Updated Section' }, 'module1');
+        expect(mockRes.json).toHaveBeenCalledWith(updated);
+      });
 
-     it('should return 404 when section is not found', async () => {
-       (updateSectionMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
-       mockReq.params = { sectionId: '1', moduleId: 'module1' };
-       mockReq.body = { title: 'Updated' };
+      it('should return 404 when section is not found', async () => {
+        (updateSectionMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1', moduleId: 'module1' };
+        mockReq.body = { title: 'Updated' };
 
-       await updateSectionController(mockReq, mockRes);
+        await updateSectionController(mockReq, mockRes);
 
-       expect(mockRes.status).toHaveBeenCalledWith(404);
-       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
-     });
+        expect(mockRes.status).toHaveBeenCalledWith(404);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
+      });
 
-     it('should return 400 if body validation fails', async () => {
-       mockReq.params = { sectionId: '1', moduleId: 'module1' };
-       mockReq.body = { title: '' };
+      it('should return 400 if body validation fails', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1', moduleId: 'module1' };
+        mockReq.body = { title: '' };
 
-       await updateSectionController(mockReq, mockRes);
+        await updateSectionController(mockReq, mockRes);
 
-       expect(mockRes.status).toHaveBeenCalledWith(400);
-       expect(mockRes.json).toHaveBeenCalledWith(
-         expect.objectContaining({ error: expect.any(Array) })
-       );
-     });
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
 
-     it('should return 400 if id param is missing', async () => {
-       mockReq.params = { moduleId: 'module1' };
-       mockReq.body = { title: 'Updated' };
+      it('should return 400 if id param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', moduleId: 'module1' };
 
-       await updateSectionController(mockReq, mockRes);
+        await updateSectionController(mockReq, mockRes);
 
-       expect(mockRes.status).toHaveBeenCalledWith(400);
-       expect(mockRes.json).toHaveBeenCalledWith(
-         expect.objectContaining({ error: expect.any(Array) })
-       );
-     });
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
 
-     it('should return 400 if moduleId param is missing', async () => {
-       mockReq.params = { sectionId: '1' };
-       mockReq.body = { title: 'Updated' };
+      it('should return 400 if moduleId param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1' };
 
-       await updateSectionController(mockReq, mockRes);
+        await updateSectionController(mockReq, mockRes);
 
-       expect(mockRes.status).toHaveBeenCalledWith(400);
-       expect(mockRes.json).toHaveBeenCalledWith(
-         expect.objectContaining({ error: expect.any(Array) })
-       );
-     });
-   });
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+
+      it('should return 400 if courseId param is missing', async () => {
+        // Mock ModuleService.findModuleById
+        (ModuleService.findModuleById as jest.Mock).mockResolvedValue({ id: 'module1', courseId: 'course-1' });
+        mockReq.params = { sectionId: '1', moduleId: 'module1' };
+
+        await updateSectionController(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+    });
 
 describe('deleteSectionController', () => {
-     it('should delete a section and return 204', async () => {
-       (deleteSectionMock as jest.Mock).mockResolvedValue(sectionStub);
-       mockReq.params = { sectionId: '1', moduleId: 'module1' };
+      it('should delete a section and return 204', async () => {
+        (deleteSectionMock as jest.Mock).mockResolvedValue(sectionStub);
+        mockReq.params = { courseId: 'course-1', sectionId: '1', moduleId: 'module1' };
 
-       await deleteSectionController(mockReq, mockRes);
+        await deleteSectionController(mockReq, mockRes);
 
-       expect(deleteSectionMock).toHaveBeenCalledWith('1', 'module1');
-       expect(mockRes.status).toHaveBeenCalledWith(204);
-       expect(mockRes.send).toHaveBeenCalled();
-     });
+        expect(deleteSectionMock).toHaveBeenCalledWith('1', 'module1');
+        expect(mockRes.status).toHaveBeenCalledWith(204);
+        expect(mockRes.send).toHaveBeenCalled();
+      });
 
-     it('should return 404 when section is not found', async () => {
-       (deleteSectionMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
-       mockReq.params = { sectionId: '1', moduleId: 'module1' };
+      it('should return 404 when section is not found', async () => {
+        (deleteSectionMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
+        mockReq.params = { courseId: 'course-1', sectionId: '1', moduleId: 'module1' };
 
-       await deleteSectionController(mockReq, mockRes);
+        await deleteSectionController(mockReq, mockRes);
 
-       expect(mockRes.status).toHaveBeenCalledWith(404);
-       expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
-     });
+        expect(mockRes.status).toHaveBeenCalledWith(404);
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
+      });
 
-     it('should return 400 if id param is missing', async () => {
-       mockReq.params = { moduleId: 'module1' };
+      it('should return 400 if id param is missing', async () => {
+        mockReq.params = { courseId: 'course-1', moduleId: 'module1' };
 
-       await deleteSectionController(mockReq, mockRes);
+        await deleteSectionController(mockReq, mockRes);
 
-       expect(mockRes.status).toHaveBeenCalledWith(400);
-       expect(mockRes.json).toHaveBeenCalledWith(
-         expect.objectContaining({ error: expect.any(Array) })
-       );
-     });
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
 
-     it('should return 400 if moduleId param is missing', async () => {
-       mockReq.params = { sectionId: '1' };
+      it('should return 400 if moduleId param is missing', async () => {
+        mockReq.params = { courseId: 'course-1', sectionId: '1' };
 
-       await deleteSectionController(mockReq, mockRes);
+        await deleteSectionController(mockReq, mockRes);
 
-       expect(mockRes.status).toHaveBeenCalledWith(400);
-       expect(mockRes.json).toHaveBeenCalledWith(
-         expect.objectContaining({ error: expect.any(Array) })
-       );
-     });
-   });
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+
+      it('should return 400 if courseId param is missing', async () => {
+        mockReq.params = { sectionId: '1', moduleId: 'module1' };
+
+        await deleteSectionController(mockReq, mockRes);
+
+        expect(mockRes.status).toHaveBeenCalledWith(400);
+        expect(mockRes.json).toHaveBeenCalledWith(
+          expect.objectContaining({ error: expect.any(Array) })
+        );
+      });
+    });
 });

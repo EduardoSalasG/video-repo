@@ -46,8 +46,11 @@ async function createToken(role: string): Promise<string> {
 
 // Helper to create a module and section for testing
 async function createModuleAndSection() {
+  const course = await prisma.course.create({
+    data: { name: 'Test Course' }
+  });
   const module = await prisma.module.create({
-    data: { title: 'Test Module', orderIndex: 0 },
+    data: { title: 'Test Module', orderIndex: 0, courseId: course.id },
   });
   
   const section = await prisma.section.create({
@@ -73,6 +76,7 @@ describe('Video Routes', () => {
     await prisma.section.deleteMany();
     await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.course.deleteMany();
     await prisma.user.deleteMany();
 
     // Create a test module and section to use for video operations
@@ -96,33 +100,33 @@ describe('Video Routes', () => {
   describe('Authentication guard', () => {
     it('should return 401 for unauthenticated GET /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .get(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .expect(401);
     });
 
     it('should return 401 for unauthenticated POST /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .send({})
         .expect(401);
     });
 
     it('should return 401 for unauthenticated PATCH /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .patch(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .send({})
         .expect(401);
     });
 
     it('should return 401 for unauthenticated DELETE /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .delete(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .expect(401);
     });
 
     it('should return 401 for unauthenticated POST /modules/:moduleId/sections/:sectionId/upload-video', async () => {
       await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
         .expect(401);
     });
   });
@@ -133,7 +137,7 @@ describe('Video Routes', () => {
       // First create video metadata as instructor to test reading
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadataRes = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({
           sectionId: testSectionId,
@@ -153,7 +157,7 @@ describe('Video Routes', () => {
 
       // Now test that student can read
       const res = await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .get(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(200);
 
@@ -163,7 +167,7 @@ describe('Video Routes', () => {
     it('should forbid STUDENT from creating video metadata', async () => {
       const studentToken = await createToken('STUDENT');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .send({
           sectionId: testSectionId,

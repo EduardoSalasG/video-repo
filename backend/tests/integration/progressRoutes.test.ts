@@ -44,13 +44,17 @@ describe('Progress Routes', () => {
     await prisma.userProgress.deleteMany();
     await prisma.videoMetadata.deleteMany();
     await prisma.section.deleteMany();
-    await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.course.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
 
     // Create a test module and section to use for progress operations
+    const course = await prisma.course.create({
+      data: { name: 'Test Course' }
+    });
     const module = await prisma.module.create({
-      data: { title: 'Test Module', orderIndex: 0 },
+      data: { title: 'Test Module', orderIndex: 0, courseId: course.id },
     });
     testModuleId = module.id;
 

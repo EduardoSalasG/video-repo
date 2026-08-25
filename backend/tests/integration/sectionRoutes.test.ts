@@ -45,11 +45,15 @@ describe('Section Routes', () => {
     await prisma.section.deleteMany();
     await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.course.deleteMany();
     await prisma.user.deleteMany();
 
     // Create a test module to use for section operations
+    const course = await prisma.course.create({
+      data: { name: 'Test Course' }
+    });
     const module = await prisma.module.create({
-      data: { title: 'Test Module', orderIndex: 0 },
+      data: { title: 'Test Module', orderIndex: 0, courseId: course.id },
     });
     testModuleId = module.id;
   });
@@ -363,7 +367,7 @@ describe('Section Routes', () => {
     it('should return 404 for a non-existent section', async () => {
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .get(`/modules/${testModuleId}/sections/non-existent-id`)
+        .get(`/courses/${course.id}/modules/${testModuleId}/sections/non-existent-id`)
         .set('Authorization', studentToken)
         .expect(404);
     });
@@ -371,8 +375,11 @@ describe('Section Routes', () => {
     it('should return 404 for a section belonging to another module', async () => {
       const studentToken = await createToken('STUDENT');
       // Create another module and a section in it
+      const otherCourse = await prisma.course.create({
+        data: { name: 'Other Course' }
+      });
       const otherModule = await prisma.module.create({
-        data: { title: 'Other Module', orderIndex: 1 },
+        data: { title: 'Other Module', orderIndex: 1, courseId: otherCourse.id },
       });
       const otherSection = await prisma.section.create({
         data: {
@@ -422,19 +429,21 @@ describe('Section Routes', () => {
     it('should return 404 when updating a section from another module', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       // Create another module and a section in it
+      const otherCourse = await prisma.course.create({
+        data: { name: 'Other Course' }
+      });
       const otherModule = await prisma.module.create({
-        data: { title: 'Other Module', orderIndex: 1 },
+        data: { title: 'Other Module', orderIndex: 1, courseId: otherCourse.id },
       });
       const otherSection = await prisma.section.create({
         data: {
           title: 'Other Section',
           orderIndex: 0,
           moduleId: otherModule.id,
-        },
       });
 
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${otherSection.id}`)
+        .patch(`/courses/${course.id}/modules/${testModuleId}/sections/${otherSection.id}`)
         .set('Authorization', instructorToken)
         .send({ title: 'Hacked' })
         .expect(404);
@@ -472,21 +481,26 @@ describe('Section Routes', () => {
     it('should return 404 when deleting a section from another module', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       // Create another module and a section in it
+      const otherCourse = await prisma.course.create({
+        data: { name: 'Other Course' }
+      });
       const otherModule = await prisma.module.create({
-        data: { title: 'Other Module', orderIndex: 1 },
+        data: { title: 'Other Module', orderIndex: 1, courseId: otherCourse.id },
       });
       const otherSection = await prisma.section.create({
         data: {
           title: 'Other Section',
           orderIndex: 0,
           moduleId: otherModule.id,
-        },
-      });
+},
+      );
 
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${otherSection.id}`)
+        .delete(`/courses/${course.id}/modules/${testModuleId}/sections/${otherSection.id}`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
+  });
+});
   });
 });

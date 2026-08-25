@@ -44,8 +44,11 @@ interface VideoSeed {
 
 // Helper to create a section with searchable metadata
 async function createSection(title: string, description: string) {
+  const course = await prisma.course.create({
+    data: { name: 'Search Test Course' }
+  });
   const module = await prisma.module.create({
-    data: { title: 'Search Test Module', orderIndex: 0 },
+    data: { title: 'Search Test Module', orderIndex: 0, courseId: course.id },
   })
 
   return prisma.section.create({
@@ -102,6 +105,7 @@ describe('Search Routes', () => {
     await prisma.section.deleteMany()
     await prisma.session.deleteMany()
     await prisma.module.deleteMany()
+    await prisma.course.deleteMany()
     await prisma.user.deleteMany()
   })
 
