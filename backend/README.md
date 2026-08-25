@@ -6,9 +6,9 @@ A Node.js/Express server backed by Prisma and PostgreSQL, exposing a REST API us
 
 * JWT-based authentication (httpOnly cookie, SameSite=Lax).
 * Role-based access control (STUDENT, INSTRUCTOR, ADMIN).
-* Full CRUD for modules, sections, video-metadata, progress, and content (markdown).
+* Full CRUD for courses, modules, sections, video-metadata, progress, and content (markdown).
 * File upload for videos (via multer-style uploadVideo utility).
-* Search endpoint (/search) with keyword, style, difficulty, and video-type filters.
+* Search endpoint (/search) with keyword, style, difficulty, video-type, and course filters.
 * Proxy-friendly design – the frontend never sees the JWT; it talks to /api/proxy/[...] which forwards the cookie.
 * Prisma ORM with migrations (via prisma migrate dev).
 * Docker-friendly – a docker run script (npm run db:start) provides a local Postgres instance.
@@ -18,8 +18,9 @@ A Node.js/Express server backed by Prisma and PostgreSQL, exposing a REST API us
 ```
 backend/
 ├─ src/
-│   ├─ controllers/   # request handlers (auth, module, section, video, content, progress, search)
+│   ├─ controllers/   # request handlers (auth, course, module, section, video, content, progress, search)
 │   │   ├─ authController.ts
+│   │   ├─ courseController.ts
 │   │   ├─ moduleController.ts
 │   │   ├─ sectionController.ts
 │   │   ├─ videoController.ts
@@ -32,6 +33,7 @@ backend/
 │   │   └─ errorHandler.ts
 │   ├─ routes/        # Express routers mounted in app.ts
 │   │   ├─ authRoutes.ts
+│   │   ├─ courseRoutes.ts
 │   │   ├─ moduleRoutes.ts
 │   │   ├─ sectionRoutes.ts
 │   │   ├─ videoRoutes.ts
@@ -44,6 +46,7 @@ backend/
 │   │   ├─ video.ts
 │   │   ├─ auth.ts
 │   │   ├─ progress.ts
+│   │   ├─ course.ts
 │   │   └─ user.ts
 │   ├─ utils/         # password hashing, token generation, video upload (local disk)
 │   │   ├─ password.ts
@@ -51,6 +54,7 @@ backend/
 │   │   └─ storage.ts
 │   ├─ validators/    # Zod schemas for input validation
 │   │   ├─ authValidators.ts
+│   │   ├─ courseValidators.ts
 │   │   ├─ moduleValidators.ts
 │   │   ├─ sectionValidators.ts
 │   │   ├─ videoValidators.ts
@@ -59,7 +63,7 @@ backend/
 │   │   └─ searchValidators.ts
 │   └─ app.ts         # Express app setup
 ├─ prisma/
-│   ├─ schema.prisma  # DB models (User, Session, Module, Section, VideoMetadata, UserProgress, …)
+│   ├─ schema.prisma  # DB models (User, Session, Course, Module, Section, VideoMetadata, UserProgress, …)
 │   └─ prisma.config.ts   # tells Prisma to read DATABASE_URL from env
 ├─ .env                # DATABASE_URL, JWT_SECRET, PORT
 ├─ Dockerfile          # multi-stage build (optional)
@@ -135,26 +139,31 @@ Create a `.env` file in the `backend/` folder (copy from `.env.example` if prese
 | `POST` | `/auth/register` | Register a new user (`role` optional, defaults to `STUDENT`). | – |
 | `POST` | `/auth/login` | Login – sets `video_repo_token` httpOnly cookie and returns `{accessToken, user}`. | – |
 | `GET`  | `/auth/me` | Returns the currently authenticated user (`{user:{…}}`). | ✅ |
-| `GET`  | `/modules/` | List all modules (paginated). | ✅ |
-| `GET`  | `/modules/:id` | Get a single module. | ✅ |
-| `POST` | `/modules/` | Create a module (INSTRUCTOR/ADMIN only). | ✅ + role |
-| `PATCH`| `/modules/:id` | Update a module. | ✅ + role |
-| `DELETE`| `/modules/:id` | Delete a module. | ✅ + role |
-| `GET`  | `/modules/:moduleId/sections` | List sections for a module. | ✅ |
-| `GET`  | `/modules/:moduleId/sections/:sectionId` | Get a single section. | ✅ |
-| `POST` | `/modules/:moduleId/sections` | Create a section. | ✅ + role |
-| `PATCH`| `/modules/:moduleId/sections/:sectionId` | Update a section. | ✅ + role |
-| `DELETE`| `/modules/:moduleId/sections/:sectionId` | Delete a section. | ✅ + role |
-| `GET`  | `/modules/:moduleId/sections/:sectionId/video-metadata` | Get video metadata for a section. | ✅ |
-| `POST` | `/modules/:moduleId/sections/:sectionId/video-metadata` | Create video metadata. | ✅ + role |
-| `PATCH`| `/modules/:moduleId/sections/:sectionId/video-metadata` | Update video metadata. | ✅ + role |
-| `DELETE`| `/modules/:moduleId/sections/:sectionId/video-metadata` | Delete video metadata. | ✅ + role |
-| `POST` | `/modules/:moduleId/sections/:sectionId/upload-video` | Upload a video file (multipart/form-data). | ✅ + role |
-| `GET`  | `/sections/:sectionId/progress` | Get the current user’s progress for a section. | ✅ |
+| `GET`  | `/courses/` | List all courses (paginated). | ✅ |
+| `GET`  | `/courses/:courseId` | Get a single course. | ✅ |
+| `POST` | `/courses/` | Create a course (INSTRUCTOR/ADMIN only). | ✅ + role |
+| `PATCH`| `/courses/:courseId` | Update a course. | ✅ + role |
+| `DELETE`| `/courses/:courseId` | Delete a course. | ✅ + role |
+| `GET`  | `/courses/:courseId/modules` | List modules for a course (paginated). | ✅ |
+| `GET`  | `/courses/:courseId/modules/:moduleId` | Get a single module in a course. | ✅ |
+| `POST` | `/courses/:courseId/modules` | Create a module in a course (INSTRUCTOR/ADMIN only). | ✅ + role |
+| `PATCH`| `/courses/:courseId/modules/:moduleId` | Update a module in a course. | ✅ + role |
+| `DELETE`| `/courses/:courseId/modules/:moduleId` | Delete a module in a course. | ✅ + role |
+| `GET`  | `/courses/:courseId/modules/:moduleId/sections` | List sections for a module in a course. | ✅ |
+| `GET`  | `/courses/:courseId/modules/:moduleId/sections/:sectionId` | Get a single section in a module of a course. | ✅ |
+| `POST` | `/courses/:courseId/modules/:moduleId/sections` | Create a section in a module of a course (INSTRUCTOR/ADMIN only). | ✅ + role |
+| `PATCH`| `/courses/:courseId/modules/:moduleId/sections/:sectionId` | Update a section in a module of a course. | ✅ + role |
+| `DELETE`| `/courses/:courseId/modules/:moduleId/sections/:sectionId` | Delete a section in a module of a course. | ✅ + role |
+| `GET`  | `/courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata` | Get video metadata for a section. | ✅ |
+| `POST` | `/courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata` | Create video metadata. | ✅ + role |
+| `PATCH`| `/courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata` | Update video metadata. | ✅ + role |
+| `DELETE`| `/courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata` | Delete video metadata. | ✅ + role |
+| `POST` | `/courses/:courseId/modules/:moduleId/sections/:sectionId/upload-video` | Upload a video file (multipart/form-data). | ✅ + role |
+| `GET`  | `/sections/:sectionId/progress` | Get the current user’s progress for a section (includes course context). | ✅ |
 | `PATCH`| `/sections/:sectionId/progress` | Upsert progress (lastPositionSeconds). | ✅ |
 | `PATCH`| `/sections/:sectionId/progress/complete` | Mark a section as completed. | ✅ |
-| `GET`  | `/progress` | Paginated list of the current user’s progress across all sections. | ✅ |
-| `GET`  | `/search` | Search video metadata (keyword, style, difficulty, type, pagination). | ✅ |
+| `GET`  | `/progress` | Paginated list of the current user’s progress across all sections (includes course context). | ✅ |
+| `GET`  | `/search` | Search video metadata (keyword, style, difficulty, type, course, pagination). | ✅ |
 | `GET`  | `/api/proxy/[...]` | **Proxy** – forwards the request (with the JWT cookie) to the backend; used by the frontend to avoid exposing the token. | ✅ (cookie forwarded) |
 
 ## Testing
