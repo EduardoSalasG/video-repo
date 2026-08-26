@@ -1,10 +1,6 @@
-import Link from 'next/link'
-
-export default function ModuleCard({ title, sectionCount, href }: { title: string; sectionCount: number; href: string }) {
-  return (
-    <Link href={href} className="block rounded-2xl bg-surface-raised p-5 shadow-sm transition hover:shadow-md">
-      <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
-      <p className="mt-1 text-sm">{sectionCount} sections</p>
-    </Link>
-  )
-}
+export default function ModuleCard({ module }) { return <div className=\
+p-4
+border
+rounded\> <h3 className=\font-semibold\>{module.title}</h3> <p className=\text-sm
+text-muted-foreground\>{module.description || \No
+description\}</p> </div>; }
