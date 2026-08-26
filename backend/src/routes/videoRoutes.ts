@@ -1,30 +1,29 @@
-import { Router } from 'express'
-import { authenticateUser } from '../middleware/auth'
-import { requireInstructor } from '../middleware/role'
-import { uploadVideo } from '../utils/storage'
+
+import { Router } from 'express';
+import { authenticateUser } from '../middleware/auth';
+import { authorizePolicy } from '../middleware/authorizePolicy';
 import {
-  getVideoMetadataBySectionId,
-  createVideoMetadataController,
-  updateVideoMetadataController,
-  deleteVideoMetadataController,
-  uploadVideoController,
-} from '../controllers/videoController'
+  getVideos,
+  getVideoById,
+  createVideoController,
+  updateVideoController,
+  deleteVideoController,
+} from '../controllers/videoController';
 
-const router = Router()
+const router = Router({ mergeParams: true });
 
-// Get video metadata for a section
-router.get('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, getVideoMetadataBySectionId);
+// All authenticated users can read videos in sections they have access to
+router.get('/', authenticateUser, authorizePolicy('videoMetadata:read'), getVideos);
+router.get('/:videoId', authenticateUser, authorizePolicy('videoMetadata:read'), getVideoById);
 
-// Create video metadata for a section
-router.post('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, requireInstructor, createVideoMetadataController);
+// Users with WRITE access to course can create videos
+router.post('/', authenticateUser, authorizePolicy('videoMetadata:create'), createVideoController);
 
-// Update video metadata for a section
-router.patch('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, requireInstructor, updateVideoMetadataController);
+// Users with WRITE access to course can update videos
+router.patch('/:videoId', authenticateUser, authorizePolicy('videoMetadata:update'), updateVideoController);
 
-// Delete video metadata for a section
-router.delete('/modules/:moduleId/sections/:sectionId/video-metadata', authenticateUser, requireInstructor, deleteVideoMetadataController);
+// Users with MAINTAIN access to course can delete videos (logic delete)
+router.delete('/:videoId', authenticateUser, authorizePolicy('videoMetadata:delete'), deleteVideoController);
 
-// Upload video file for a section
-router.post('/modules/:moduleId/sections/:sectionId/upload-video', authenticateUser, requireInstructor, uploadVideo.single('video'), uploadVideoController);
+export default router;
 
-export default router

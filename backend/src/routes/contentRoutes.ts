@@ -1,17 +1,29 @@
-import { Router } from 'express'
-import { authenticateUser } from '../middleware/auth'
-import { requireInstructor } from '../middleware/role'
+
+import { Router } from 'express';
+import { authenticateUser } from '../middleware/auth';
+import { authorizePolicy } from '../middleware/authorizePolicy';
 import {
-  getContent,
-  updateContent,
-} from '../controllers/contentController'
+  getContents,
+  getContentById,
+  createContentController,
+  updateContentController,
+  deleteContentController,
+} from '../controllers/contentController';
 
-const router = Router()
+const router = Router();
 
-// Get markdown content for a section - accessible to all authenticated users
-router.get('/modules/:moduleId/sections/:sectionId/content', authenticateUser, getContent)
+// All authenticated users can read content in sections they have access to
+router.get('/', authenticateUser, authorizePolicy('content:read'), getContents);
+router.get('/:contentId', authenticateUser, authorizePolicy('content:read'), getContentById);
 
-// Update markdown content for a section - requires instructor or admin
-router.patch('/modules/:moduleId/sections/:sectionId/content', authenticateUser, requireInstructor, updateContent)
+// Users with WRITE access to course can create content
+router.post('/', authenticateUser, authorizePolicy('content:create'), createContentController);
 
-export default router
+// Users with WRITE access to course can update content
+router.patch('/:contentId', authenticateUser, authorizePolicy('content:update'), updateContentController);
+
+// Users with MAINTAIN access to course can delete content (logic delete)
+router.delete('/:contentId', authenticateUser, authorizePolicy('content:delete'), deleteContentController);
+
+export default router;
+

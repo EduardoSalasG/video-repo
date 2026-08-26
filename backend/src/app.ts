@@ -1,3 +1,4 @@
+
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -9,10 +10,11 @@ import contentRoutes from './routes/contentRoutes';
 import searchRoutes from './routes/searchRoutes';
 import progressRoutes from './routes/progressRoutes';
 import courseRoutes from './routes/courseRoutes';
+import accessRoutes from './routes/accessRoutes';
 
 const app = express();
 
-// CORS configuration – allow requests from the frontend dev server
+// CORS configuration - allow requests from the frontend dev server
 app.use(
   cors({
     origin: 'http://localhost:3001', // frontend URL
@@ -28,12 +30,14 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.use('/auth', authRoutes);
-app.use('/modules', moduleRoutes);
-app.use('/courses', courseRoutes);
-app.use('/', sectionRoutes);
-app.use('/', videoRoutes);
-app.use('/', contentRoutes);
+app.use('/courses/:courseId/modules', moduleRoutes);
+app.use('/courses/:courseId/modules/:moduleId/sections', sectionRoutes);
+app.use('/courses/:courseId/modules/:moduleId/sections/:sectionId/video', videoRoutes);
+app.use('/courses/:courseId/modules/:moduleId/sections/:sectionId/content', contentRoutes);
 app.use('/', searchRoutes);
 app.use('/', progressRoutes);
+app.use('/courses', courseRoutes);
+app.use('/courses', accessRoutes);
 
 export default app;
+

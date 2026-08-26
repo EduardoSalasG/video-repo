@@ -1,24 +1,29 @@
-import { Router } from 'express'
-import { authenticateUser } from '../middleware/auth'
+
+import { Router } from 'express';
+import { authenticateUser } from '../middleware/auth';
+import { authorizePolicy } from '../middleware/authorizePolicy';
 import {
   getProgress,
-  updateProgress,
-  markProgressComplete,
-  getAllProgress,
-} from '../controllers/progressController'
+  getProgressById,
+  createProgressController,
+  updateProgressController,
+  deleteProgressController,
+} from '../controllers/progressController';
 
-const router = Router()
+const router = Router();
 
-// Get the current user's progress for a section
-router.get('/sections/:sectionId/progress', authenticateUser, getProgress)
+// All authenticated users can read their own progress
+router.get('/', authenticateUser, authorizePolicy('progress:read'), getProgress);
+router.get('/:progressId', authenticateUser, authorizePolicy('progress:read'), getProgressById);
 
-// Upsert the current user's progress for a section
-router.patch('/sections/:sectionId/progress', authenticateUser, updateProgress)
+// Users with WRITE access to course can create progress (for themselves or others if instructor?)
+router.post('/', authenticateUser, authorizePolicy('progress:create'), createProgressController);
 
-// Mark the current user's section as complete
-router.patch('/sections/:sectionId/progress/complete', authenticateUser, markProgressComplete)
+// Users with WRITE access to course can update progress
+router.patch('/:progressId', authenticateUser, authorizePolicy('progress:update'), updateProgressController);
 
-// Get a paginated list of the current user's progress
-router.get('/progress', authenticateUser, getAllProgress)
+// Users with MAINTAIN access to course can delete progress (logic delete)
+router.delete('/:progressId', authenticateUser, authorizePolicy('progress:delete'), deleteProgressController);
 
-export default router
+export default router;
+

@@ -1,24 +1,30 @@
-import { Router } from 'express'
-import { authenticateUser } from '../middleware/auth'
-import { requireInstructor } from '../middleware/role'
+
+import { Router } from 'express';
+import { authenticateUser } from '../middleware/auth';
+import { authorizePolicy } from '../middleware/authorizePolicy';
 import {
   getSections,
   getSectionById, getSectionByIdOnlyController,
   createSectionController,
   updateSectionController,
   deleteSectionController,
-} from '../controllers/sectionController'
+} from '../controllers/sectionController';
 
-const router = Router()
+const router = Router({ mergeParams: true });
 
-// All authenticated users can read sections
-router.get('/courses/:courseId/modules/:moduleId/sections', authenticateUser, getSections)
-router.get('/courses/:courseId/modules/:moduleId/sections/:sectionId', authenticateUser, getSectionById)
+// All authenticated users can read sections in courses they have access to
+router.get('/', authenticateUser, authorizePolicy('section:read'), getSections);
+router.get('/:sectionId', authenticateUser, authorizePolicy('section:read'), getSectionById);
 
-// Only instructors and admins can write sections
-router.post('/courses/:courseId/modules/:moduleId/sections', authenticateUser, requireInstructor, createSectionController)
-router.patch('/courses/:courseId/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, updateSectionController)
-router.delete('/courses/:courseId/modules/:moduleId/sections/:sectionId', authenticateUser, requireInstructor, deleteSectionController)
-router.get("/section/:sectionId", authenticateUser, getSectionByIdOnlyController)
+// Users with WRITE access to course can create sections
+router.post('/', authenticateUser, authorizePolicy('section:create'), createSectionController);
 
-export default router
+// Users with WRITE access to course can update sections
+router.patch('/:sectionId', authenticateUser, authorizePolicy('section:update'), updateSectionController);
+
+// Users with MAINTAIN access to course can delete sections (logic delete)
+router.delete('/:sectionId', authenticateUser, authorizePolicy('section:delete'), deleteSectionController);
+router.get('/section/:sectionId', authenticateUser, authorizePolicy('section:read'), getSectionByIdOnlyController);
+
+export default router;
+
