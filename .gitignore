@@ -50,3 +50,6 @@ uploads/
 # Local Node.js binaries and archives (used for the dev environment)
 node/
 node-v*db/postgres/
+
+# PostgreSQL data directory
+backend/pg_data/
