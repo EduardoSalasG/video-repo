@@ -61,7 +61,7 @@ async function createModuleAndSection() {
     },
   });
   
-  return { moduleId: module.id, sectionId: section.id };
+  return { courseId: course.id, moduleId: module.id, sectionId: section.id };
 }
 
 describe('Video Routes', () => {
@@ -80,7 +80,7 @@ describe('Video Routes', () => {
     await prisma.user.deleteMany();
 
     // Create a test module and section to use for video operations
-    const { moduleId, sectionId } = await createModuleAndSection();
+    const { courseId, moduleId, sectionId } = await createModuleAndSection();
     testModuleId = moduleId;
     testSectionId = sectionId;
 
@@ -98,35 +98,35 @@ describe('Video Routes', () => {
   });
 
   describe('Authentication guard', () => {
-    it('should return 401 for unauthenticated GET /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
+    it('should return 401 for unauthenticated GET /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .get(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .get(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated POST /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
+    it('should return 401 for unauthenticated POST /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .send({})
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated PATCH /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
+    it('should return 401 for unauthenticated PATCH /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .patch(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .patch(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .send({})
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated DELETE /modules/:moduleId/sections/:sectionId/video-metadata', async () => {
+    it('should return 401 for unauthenticated DELETE /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', async () => {
       await request(app)
-        .delete(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .delete(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated POST /modules/:moduleId/sections/:sectionId/upload-video', async () => {
+    it('should return 401 for unauthenticated POST /courses/:courseId/modules/:moduleId/sections/:sectionId/upload-video', async () => {
       await request(app)
-        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
         .expect(401);
     });
   });
@@ -137,7 +137,7 @@ describe('Video Routes', () => {
       // First create video metadata as instructor to test reading
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadataRes = await request(app)
-        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({
           sectionId: testSectionId,
@@ -157,7 +157,7 @@ describe('Video Routes', () => {
 
       // Now test that student can read
       const res = await request(app)
-        .get(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .get(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(200);
 
@@ -167,7 +167,7 @@ describe('Video Routes', () => {
     it('should forbid STUDENT from creating video metadata', async () => {
       const studentToken = await createToken('STUDENT');
       const res = await request(app)
-        .post(`/courses/${testModuleId}/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .send({
           sectionId: testSectionId,
@@ -191,7 +191,7 @@ describe('Video Routes', () => {
       // First create video metadata as instructor
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadataRes = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({
           sectionId: testSectionId,
@@ -211,7 +211,7 @@ describe('Video Routes', () => {
 
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .patch(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .send({ steps: [{ step: 'updated', count: 6 }] })
         .expect(403);
@@ -221,7 +221,7 @@ describe('Video Routes', () => {
       // First create video metadata as instructor
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadataRes = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({
           sectionId: testSectionId,
@@ -241,7 +241,7 @@ describe('Video Routes', () => {
 
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .delete(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(403);
     });
@@ -249,7 +249,7 @@ describe('Video Routes', () => {
     it('should forbid STUDENT from uploading video', async () => {
       const studentToken = await createToken('STUDENT');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
         .set('Authorization', studentToken)
         .expect(403);
 
@@ -280,7 +280,7 @@ describe('Video Routes', () => {
       for (const token of [instructorToken, adminToken]) {
         await prisma.videoMetadata.deleteMany({ where: { sectionId: testSectionId } });
         const res = await request(app)
-          .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+          .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', token)
           .send(createBody)
           .expect(201);
@@ -290,7 +290,7 @@ describe('Video Routes', () => {
       // Test update (the record created above still exists)
       for (const token of [instructorToken, adminToken]) {
         const res = await request(app)
-          .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+          .patch(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', token)
           .send({ steps: [{ step: 'updated', count: 6 }] })
           .expect(200);
@@ -301,23 +301,23 @@ describe('Video Routes', () => {
       for (const token of [instructorToken, adminToken]) {
         await prisma.videoMetadata.deleteMany({ where: { sectionId: testSectionId } });
         await request(app)
-          .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+          .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', instructorToken)
           .send({ ...createBody, filename: 'todelete.mp4', durationCounts: 4, fileSize: 512000, durationSeconds: 60 })
           .expect(201);
         await request(app)
-          .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+          .delete(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
           .set('Authorization', token)
           .expect(204);
       }
     });
   });
 
-  describe('GET /modules/:moduleId/sections/:sectionId/video-metadata', () => {
+  describe('GET /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', () => {
     it('should return 404 when no video metadata exists for a section', async () => {
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .get(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(404);
     });
@@ -341,7 +341,7 @@ describe('Video Routes', () => {
       });
 
       const res = await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .get(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(200);
 
@@ -377,17 +377,17 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .get(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', studentToken)
         .expect(404);
     });
   });
 
-  describe('POST /modules/:moduleId/sections/:sectionId/video-metadata', () => {
+  describe('POST /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', () => {
     it('should create video metadata as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({
           sectionId: testSectionId,
@@ -413,7 +413,7 @@ describe('Video Routes', () => {
     it('should create video metadata as ADMIN', async () => {
       const adminToken = await createToken('ADMIN');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', adminToken)
         .send({
           sectionId: testSectionId,
@@ -437,7 +437,7 @@ describe('Video Routes', () => {
     it('should return 400 for invalid body', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ sectionId: '' }) // Invalid: empty sectionId
         .expect(400);
@@ -446,7 +446,7 @@ describe('Video Routes', () => {
     });
   });
 
-  describe('PATCH /modules/:moduleId/sections/:sectionId/video-metadata', () => {
+  describe('PATCH /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', () => {
     it('should update video metadata as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadata = await prisma.videoMetadata.create({
@@ -466,7 +466,7 @@ describe('Video Routes', () => {
       });
 
       const res = await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .patch(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ steps: [{ step: 'updated step', count: 4 }], difficulty: 'INTERMEDIATE' })
         .expect(200);
@@ -479,7 +479,7 @@ describe('Video Routes', () => {
     it('should return 404 when updating a non-existent video metadata', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .patch(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ steps: [{ step: 'updated', count: 6 }] })
         .expect(404);
@@ -512,7 +512,7 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .patch(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ steps: [{ step: 'hacked', count: 10 }] })
         .expect(404);
@@ -537,7 +537,7 @@ describe('Video Routes', () => {
       });
 
       const res = await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .patch(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .send({ difficulty: 'EXPERT' }) // Invalid difficulty
         .expect(400);
@@ -546,7 +546,7 @@ describe('Video Routes', () => {
     });
   });
 
-  describe('DELETE /modules/:moduleId/sections/:sectionId/video-metadata', () => {
+  describe('DELETE /courses/:courseId/modules/:moduleId/sections/:sectionId/video-metadata', () => {
     it('should delete video metadata as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const videoMetadata = await prisma.videoMetadata.create({
@@ -566,7 +566,7 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .delete(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .expect(204);
 
@@ -577,7 +577,7 @@ describe('Video Routes', () => {
     it('should return 404 when deleting a non-existent video metadata', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .delete(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
@@ -609,17 +609,17 @@ describe('Video Routes', () => {
       });
 
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
+        .delete(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/video-metadata`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
   });
 
-  describe('POST /modules/:moduleId/sections/:sectionId/upload-video', () => {
+  describe('POST /courses/:courseId/modules/:moduleId/sections/:sectionId/upload-video', () => {
     it('should upload video as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
         .set('Authorization', instructorToken)
         .attach('video', Buffer.from('fake video content'), 'test-video.mp4')
         .expect(201);
@@ -632,7 +632,7 @@ describe('Video Routes', () => {
     it('should upload video as ADMIN', async () => {
       const adminToken = await createToken('ADMIN');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
         .set('Authorization', adminToken)
         .attach('video', Buffer.from('fake video content'), 'test-video.mp4')
         .expect(201);
@@ -643,7 +643,7 @@ describe('Video Routes', () => {
     it('should return 400 if no file is uploaded', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
         .set('Authorization', instructorToken)
         .expect(400);
 
@@ -655,7 +655,7 @@ describe('Video Routes', () => {
       // The route requires sectionId in the path; a request without it does
       // not match any route and is rejected as not found.
       await request(app)
-        .post(`/modules/${testModuleId}/sections/upload-video`)
+        .post(`/courses/1/modules/${testModuleId}/sections/upload-video`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
@@ -667,7 +667,7 @@ describe('Video Routes', () => {
       );
 
       await request(app)
-        .post(`/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
+        .post(`/courses/1/modules/${testModuleId}/sections/${testSectionId}/upload-video`)
         .set('Authorization', instructorToken)
         .attach('video', Buffer.from('fake video content'), 'test-video.mp4')
         .expect(500);

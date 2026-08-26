@@ -52,20 +52,20 @@ describe('Module Routes', () => {
   });
 
   describe('Authentication guard', () => {
-    it('should return 401 for unauthenticated GET /modules', async () => {
-      await request(app).get('/modules').expect(401);
+    it('should return 401 for unauthenticated GET /courses/:courseId/modules', async () => {
+      await request(app).get('/courses/test-course-id/modules').expect(401);
     });
 
-    it('should return 401 for unauthenticated POST /modules', async () => {
-      await request(app).post('/modules').send({ title: 'Test' }).expect(401);
+    it('should return 401 for unauthenticated POST /courses/:courseId/modules', async () => {
+      await request(app).post('/courses/test-course-id/modules').send({ title: 'Test' }).expect(401);
     });
 
-    it('should return 401 for unauthenticated PATCH /modules/:id', async () => {
-      await request(app).patch('/modules/some-id').send({}).expect(401);
+    it('should return 401 for unauthenticated PATCH /courses/:courseId/modules/:moduleId', async () => {
+      await request(app).patch('/courses/test-course-id/modules/some-id').send({}).expect(401);
     });
 
-    it('should return 401 for unauthenticated DELETE /modules/:id', async () => {
-      await request(app).delete('/modules/some-id').expect(401);
+    it('should return 401 for unauthenticated DELETE /courses/:courseId/modules/:moduleId', async () => {
+      await request(app).delete('/courses/test-course-id/modules/some-id').expect(401);
     });
   });
 
@@ -73,7 +73,7 @@ describe('Module Routes', () => {
     it('should forbid STUDENT from creating a module', async () => {
       const studentToken = await createToken('STUDENT');
       const res = await request(app)
-        .post('/modules')
+        .post('/courses/test-course-id/modules')
         .set('Authorization', studentToken)
         .send({ title: 'Student module' })
         .expect(403);
@@ -84,7 +84,7 @@ describe('Module Routes', () => {
     it('should forbid STUDENT from updating a module', async () => {
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .patch('/modules/some-id')
+        .patch('/courses/test-course-id/modules/some-id')
         .set('Authorization', studentToken)
         .send({ title: 'Updated' })
         .expect(403);
@@ -93,7 +93,7 @@ describe('Module Routes', () => {
     it('should forbid STUDENT from deleting a module', async () => {
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .delete('/modules/some-id')
+        .delete('/courses/test-course-id/modules/some-id')
         .set('Authorization', studentToken)
         .expect(403);
     });
@@ -104,7 +104,7 @@ describe('Module Routes', () => {
       const adminToken = await createToken('ADMIN');
 
       for (const token of [studentToken, instructorToken, adminToken]) {
-        await request(app).get('/modules').set('Authorization', token).expect(200);
+        await request(app).get('/courses/test-course-id/modules').set('Authorization', token).expect(200);
       }
     });
 
@@ -129,11 +129,14 @@ describe('Module Routes', () => {
     });
   });
 
-  describe('POST /modules', () => {
+  describe('POST /courses/:courseId/modules', () => {
     it('should create a module as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
+      const course = await prisma.course.create({
+        data: { name: 'Test Course' }
+      });
       const res = await request(app)
-        .post('/modules')
+        .post(`/courses/${course.id}/modules`)
         .set('Authorization', instructorToken)
         .send({ title: 'Intro to Bachata', orderIndex: 1 })
         .expect(201);
@@ -141,12 +144,16 @@ describe('Module Routes', () => {
       expect(res.body).toHaveProperty('id');
       expect(res.body.title).toBe('Intro to Bachata');
       expect(res.body.orderIndex).toBe(1);
+      expect(res.body.courseId).toBe(course.id);
     });
 
     it('should create a module as ADMIN', async () => {
       const adminToken = await createToken('ADMIN');
+      const course = await prisma.course.create({
+        data: { name: 'Test Course' }
+      });
       const res = await request(app)
-        .post('/modules')
+        .post(`/courses/${course.id}/modules`)
         .set('Authorization', adminToken)
         .send({ title: 'Casino Fundamentals' })
         .expect(201);
@@ -157,7 +164,7 @@ describe('Module Routes', () => {
     it('should return 400 for invalid body', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post('/modules')
+        .post('/courses/test-course-id/modules')
         .set('Authorization', instructorToken)
         .send({ title: '' })
         .expect(400);
@@ -166,7 +173,7 @@ describe('Module Routes', () => {
     });
   });
 
-  describe('GET /modules', () => {
+  describe('GET /courses/:courseId/modules', () => {
     it('should return paginated list of modules', async () => {
       const studentToken = await createToken('STUDENT');
       const course = await prisma.course.create({
@@ -212,7 +219,7 @@ describe('Module Routes', () => {
     });
   });
 
-  describe('GET /modules/:id', () => {
+  describe('GET /courses/:courseId/modules/:moduleId', () => {
     it('should return a module with its sections', async () => {
       const studentToken = await createToken('STUDENT');
       const course = await prisma.course.create({
@@ -233,7 +240,9 @@ describe('Module Routes', () => {
 
       expect(res.body.id).toBe(module.id);
       expect(res.body.title).toBe('Rueda Basics');
-      expect(res.body.sections).toEqual([]);
+      expect(res.body.sections).toHaveLength(1);
+      expect(res.body.sections[0].title).toBe('Basic Step');
+      expect(res.body.sections[0].id).toBe(section.id);
     });
 
     it('should return 404 for a non-existent module', async () => {
@@ -245,7 +254,7 @@ describe('Module Routes', () => {
     });
   });
 
-  describe('PATCH /modules/:id', () => {
+  describe('PATCH /courses/:courseId/modules/:moduleId', () => {
     it('should update a module as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const course = await prisma.course.create({
@@ -262,17 +271,19 @@ describe('Module Routes', () => {
         .expect(200);
 
       expect(res.body.title).toBe('Updated Title');
+    });
+
     it('should return 404 when updating a non-existent module', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .patch(`/courses/non-existent-course-id/modules/non-existent-module-id`)
+        .patch('/courses/non-existent-course-id/modules/non-existent-module-id')
         .set('Authorization', instructorToken)
         .send({ title: 'Nope' })
         .expect(404);
     });
   });
 
-  describe('DELETE /modules/:id', () => {
+  describe('DELETE /courses/:courseId/modules/:moduleId', () => {
     it('should delete a module as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const course = await prisma.course.create({
@@ -294,7 +305,7 @@ describe('Module Routes', () => {
     it('should return 404 when deleting a non-existent module', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .delete(`/courses/non-existent-course-id/modules/non-existent-module-id`)
+        .delete('/courses/non-existent-course-id/modules/non-existent-module-id')
         .set('Authorization', instructorToken)
         .expect(404);
     });

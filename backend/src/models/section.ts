@@ -1,3 +1,4 @@
+
 import prisma from '../config/database'
 
 export interface SectionListParams {
@@ -55,6 +56,7 @@ export async function findAllSections(
 
   const where = {
     moduleId,
+    isDeleted: false,
     ...(search
       ? {
           OR: [
@@ -104,7 +106,7 @@ export async function findAllSections(
 
 export async function findSectionById(id: string, moduleId: string) {
   return prisma.section.findUnique({
-    where: { id, moduleId },
+    where: { id, moduleId, isDeleted: false },
   })
 }
 
@@ -123,7 +125,7 @@ export async function createSection(data: CreateSectionInput) {
 
 export async function updateSection(id: string, data: UpdateSectionInput, moduleId: string) {
   return prisma.section.update({
-    where: { id, moduleId },
+    where: { id, moduleId, isDeleted: false },
     data: {
       title: data.title,
       description: data.description,
@@ -135,8 +137,17 @@ export async function updateSection(id: string, data: UpdateSectionInput, module
 }
 
 export async function deleteSection(id: string, moduleId: string) {
-  return prisma.section.delete({ where: { id, moduleId } })
+  return prisma.section.update({
+    where: { id, moduleId, isDeleted: false },
+    data: {
+      isDeleted: true,
+      deletedAt: new Date()
+    }
+  })
 }
 export async function findSectionByIdOnly(id: string) {
-  return prisma.section.findUnique({ where: { id } });
+  return prisma.section.findUnique({ 
+    where: { id, isDeleted: false } 
+  });
 }
+

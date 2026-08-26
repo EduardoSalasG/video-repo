@@ -1,3 +1,4 @@
+
 import prisma from '../config/database'
 import { Prisma, Difficulty, PrimaryStyle, VideoType } from '@prisma/client'
 
@@ -66,9 +67,12 @@ export async function findAllVideoMetadata(
   const limit = params.limit ?? 10
   const search = params.search
 
-  let where: any = {}
+  let where: any = {
+    isDeleted: false
+  };
   if (search && search !== '') {
     where = {
+      ...where,
       OR: [
         { sectionId: { contains: search, mode: 'insensitive' as const } },
       ],
@@ -113,13 +117,13 @@ export async function findAllVideoMetadata(
 
 export async function findVideoMetadataById(id: string) {
   return prisma.videoMetadata.findUnique({
-    where: { id },
+    where: { id, isDeleted: false },
   })
 }
 
 export async function findVideoMetadataBySectionId(sectionId: string) {
   return prisma.videoMetadata.findUnique({
-    where: { sectionId },
+    where: { sectionId, isDeleted: false },
   })
 }
 
@@ -146,7 +150,7 @@ export async function updateVideoMetadataBySectionId(
   data: UpdateVideoMetadataInput
 ) {
   return prisma.videoMetadata.update({
-    where: { sectionId },
+    where: { sectionId, isDeleted: false },
     data: {
       steps: data.steps as Prisma.InputJsonValue[],
       difficulty: data.difficulty
@@ -169,5 +173,12 @@ export async function updateVideoMetadataBySectionId(
 }
 
 export async function deleteVideoMetadataBySectionId(sectionId: string) {
-  return prisma.videoMetadata.delete({ where: { sectionId } })
+  return prisma.videoMetadata.update({
+    where: { sectionId, isDeleted: false },
+    data: {
+      isDeleted: true,
+      deletedAt: new Date()
+    }
+  })
 }
+

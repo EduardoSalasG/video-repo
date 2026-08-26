@@ -97,6 +97,10 @@ export async function createModuleController(
     console.error('Validation error in createModuleController:', error);
     if (isZodError(error)) {
       res.status(400).json({ error: zodErrorDetails(error) });
+} else if (error instanceof Error && error.message === 'Course not found') {
+      res.status(404).json({ error: 'Course not found' });
+    } else if (isPrismaNotFound(error)) {
+      res.status(404).json({ error: 'Module not found' });
     } else {
       console.error(error);
       res.status(500).json({ error: 'Internal server error' });
@@ -104,7 +108,7 @@ export async function createModuleController(
   }
 }
 
-/** 
+/**
  * Update an existing module
  */
 export async function updateModuleController(
@@ -124,6 +128,8 @@ export async function updateModuleController(
     console.error('Validation error in updateModuleController:', error);
     if (isZodError(error)) {
       res.status(400).json({ error: zodErrorDetails(error) });
+    } else if (error instanceof Error && error.message === 'Course not found') {
+      res.status(404).json({ error: 'Course not found' });
     } else if (isPrismaNotFound(error)) {
       res.status(404).json({ error: 'Module not found' });
     } else {

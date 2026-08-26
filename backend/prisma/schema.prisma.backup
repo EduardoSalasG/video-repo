@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  firstName String
+  lastName  String
+  role      Role     @default(STUDENT)
+  passwordHash String
+  sessions  Session[]
+  progress  UserProgress[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Session for magic-link
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+// Course model
+model Course {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  modules   Module[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Module model
+model Module {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  orderIndex    Int      @default(0)
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
+  sections      Section[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Section model
+model Section {
+  id            String   @id @default(uuid())
+  moduleId      String
+  module        Module   @relation(fields: [moduleId], references: [id])
+  title         String
+  description   String?
+  orderIndex    Int      @default(0)
+  videoUrl      String?
+  markdownContent String?
+  videoMetadata VideoMetadata?
+  progress      UserProgress[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Video metadata model
+model VideoMetadata {
+  id            String   @id @default(uuid())
+  sectionId     String   @unique
+  section       Section  @relation(fields: [sectionId], references: [id])
+  steps         Json[]
+  difficulty    Difficulty
+  primaryStyle  PrimaryStyle
+  influences    Json[]
+  durationCounts Int
+  videoType     VideoType
+  tags          Json[]
+  fileSize      Int?
+  durationSeconds Int?
+  filename      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// User progress model
+model UserProgress {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  sectionId       String
+  section         Section  @relation(fields: [sectionId], references: [id])
+  completedAt     DateTime?
+  lastPositionSeconds Int?
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, sectionId])
+}
+
+// Enums
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum PrimaryStyle {
+  MAMBO_ON2
+  CASINO
+  SENSUAL_BACHATA
+  MODERN_BACHATA
+}
+
+enum VideoType {
+  STEP_BREAKDOWN
+  COMBINATION
+  FULL_PATTERN
+  SHINES_SEQUENCE
+}

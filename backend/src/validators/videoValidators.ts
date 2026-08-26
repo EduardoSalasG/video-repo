@@ -39,4 +39,4 @@ export const videoMetadataIdSchema = z.object({
 
 export const videoMetadataSectionIdSchema = z.object({
   sectionId: z.string().min(1, 'Section id is required'),
-})
+}).strip();

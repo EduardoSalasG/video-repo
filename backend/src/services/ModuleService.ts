@@ -1,3 +1,4 @@
+
 import prisma from '../config/database';
 import { CourseService } from './CourseService';
 
@@ -6,6 +7,7 @@ export class ModuleService {
     const { page = 1, limit = 10, search, courseId } = params;
     
     const where = {
+      isDeleted: false,
       ...(courseId && { courseId }),
       ...(search
         ? {
@@ -51,9 +53,10 @@ export class ModuleService {
 
   static async findModuleById(id: string) {
     return prisma.module.findUnique({
-      where: { id },
+      where: { id: id, isDeleted: false },
       include: {
         sections: {
+          where: { isDeleted: false },
           orderBy: { orderIndex: 'asc' },
           select: {
             id: true,
@@ -97,7 +100,7 @@ export class ModuleService {
     }
     
     return prisma.module.update({
-      where: { id },
+      where: { id: id, isDeleted: false },
       data: {
         title: data.title,
         description: data.description,
@@ -108,6 +111,13 @@ export class ModuleService {
   }
 
   static async deleteModule(id: string) {
-    return prisma.module.delete({ where: { id } });
+    return prisma.module.update({
+      where: { id: id, isDeleted: false },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date()
+      }
+    });
   }
 }
+

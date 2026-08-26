@@ -34,7 +34,20 @@ async function createToken(role: string): Promise<string> {
   return `Bearer ${generateToken({ userId: user.id }, jwtSecret!, '1h')}`;
 }
 
+// Helper to create a course and module for testing
+async function createCourseAndModule() {
+  const course = await prisma.course.create({
+    data: { name: 'Test Course' }
+  });
+  const module = await prisma.module.create({
+    data: { title: 'Test Module', orderIndex: 0, courseId: course.id },
+  });
+  
+  return { courseId: course.id, moduleId: module.id };
+}
+
 describe('Section Routes', () => {
+  let testCourseId: string;
   let testModuleId: string;
 
   beforeEach(async () => {
@@ -48,14 +61,10 @@ describe('Section Routes', () => {
     await prisma.course.deleteMany();
     await prisma.user.deleteMany();
 
-    // Create a test module to use for section operations
-    const course = await prisma.course.create({
-      data: { name: 'Test Course' }
-    });
-    const module = await prisma.module.create({
-      data: { title: 'Test Module', orderIndex: 0, courseId: course.id },
-    });
-    testModuleId = module.id;
+    // Create a test course and module to use for section operations
+    const { courseId, moduleId } = await createCourseAndModule();
+    testCourseId = courseId;
+    testModuleId = moduleId;
   });
 
   afterAll(async () => {
@@ -63,35 +72,35 @@ describe('Section Routes', () => {
   });
 
   describe('Authentication guard', () => {
-    it('should return 401 for unauthenticated GET /modules/:moduleId/sections', async () => {
+    it('should return 401 for unauthenticated GET /courses/:courseId/modules/:moduleId/sections', async () => {
       await request(app)
-        .get(`/modules/${testModuleId}/sections`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated POST /modules/:moduleId/sections', async () => {
+    it('should return 401 for unauthenticated POST /courses/:courseId/modules/:moduleId/sections', async () => {
       await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .send({ title: 'Test Section', orderIndex: 0 })
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated GET /modules/:moduleId/sections/:sectionId', async () => {
+    it('should return 401 for unauthenticated GET /courses/:courseId/modules/:moduleId/sections/:sectionId', async () => {
       await request(app)
-        .get(`/modules/${testModuleId}/sections/non-existent`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/non-existent`)
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated PATCH /modules/:moduleId/sections/:sectionId', async () => {
+    it('should return 401 for unauthenticated PATCH /courses/:courseId/modules/:moduleId/sections/:sectionId', async () => {
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/non-existent`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/non-existent`)
         .send({})
         .expect(401);
     });
 
-    it('should return 401 for unauthenticated DELETE /modules/:moduleId/sections/:sectionId', async () => {
+    it('should return 401 for unauthenticated DELETE /courses/:courseId/modules/:moduleId/sections/:sectionId', async () => {
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/non-existent`)
+        .delete(`/courses/${testCourseId}/modules/${testModuleId}/sections/non-existent`)
         .expect(401);
     });
   });
@@ -102,7 +111,7 @@ describe('Section Routes', () => {
       // First create a section as admin to test reading
       const adminToken = await createToken('ADMIN');
       const sectionRes = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', adminToken)
         .send({ title: 'Test Section', orderIndex: 0 })
         .expect(201);
@@ -110,12 +119,12 @@ describe('Section Routes', () => {
 
       // Now test that student can read
       await request(app)
-        .get(`/modules/${testModuleId}/sections`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', studentToken)
         .expect(200);
 
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${sectionId}`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/${sectionId}`)
         .set('Authorization', studentToken)
         .expect(200);
     });
@@ -123,7 +132,7 @@ describe('Section Routes', () => {
     it('should forbid STUDENT from creating a section', async () => {
       const studentToken = await createToken('STUDENT');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', studentToken)
         .send({ title: 'Student section', orderIndex: 0 })
         .expect(403);
@@ -135,7 +144,7 @@ describe('Section Routes', () => {
       // First create a section as admin
       const adminToken = await createToken('ADMIN');
       const sectionRes = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', adminToken)
         .send({ title: 'Test Section', orderIndex: 0 })
         .expect(201);
@@ -143,7 +152,7 @@ describe('Section Routes', () => {
 
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${sectionId}`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${sectionId}`)
         .set('Authorization', studentToken)
         .send({ title: 'Updated' })
         .expect(403);
@@ -153,7 +162,7 @@ describe('Section Routes', () => {
       // First create a section as admin
       const adminToken = await createToken('ADMIN');
       const sectionRes = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', adminToken)
         .send({ title: 'Test Section', orderIndex: 0 })
         .expect(201);
@@ -161,7 +170,7 @@ describe('Section Routes', () => {
 
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${sectionId}`)
+        .delete(`/courses/${testCourseId}/modules/${testModuleId}/sections/${sectionId}`)
         .set('Authorization', studentToken)
         .expect(403);
     });
@@ -173,7 +182,7 @@ describe('Section Routes', () => {
       // Test creation
       for (const token of [instructorToken, adminToken]) {
         const res = await request(app)
-          .post(`/modules/${testModuleId}/sections`)
+          .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
           .set('Authorization', token)
           .send({ title: 'Test Section', orderIndex: 0 })
           .expect(201);
@@ -184,7 +193,7 @@ describe('Section Routes', () => {
 
       // For update and delete, we need a section to operate on
       const sectionRes = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', instructorToken)
         .send({ title: 'Test Section', orderIndex: 0 })
         .expect(201);
@@ -193,7 +202,7 @@ describe('Section Routes', () => {
       // Test update
       for (const token of [instructorToken, adminToken]) {
         await request(app)
-          .patch(`/modules/${testModuleId}/sections/${sectionId}`)
+          .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${sectionId}`)
           .set('Authorization', token)
           .send({ title: 'Updated Section' })
           .expect(200);
@@ -203,24 +212,24 @@ describe('Section Routes', () => {
       for (const token of [instructorToken, adminToken]) {
         // Recreate section for each delete test
         const secRes = await request(app)
-          .post(`/modules/${testModuleId}/sections`)
+          .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
           .set('Authorization', instructorToken)
           .send({ title: 'To Delete', orderIndex: 0 })
           .expect(201);
         const delId = secRes.body.id;
         await request(app)
-          .delete(`/modules/${testModuleId}/sections/${delId}`)
+          .delete(`/courses/${testCourseId}/modules/${testModuleId}/sections/${delId}`)
           .set('Authorization', token)
           .expect(204);
       }
     });
   });
 
-  describe('POST /modules/:moduleId/sections', () => {
+  describe('POST /courses/:courseId/modules/:moduleId/sections', () => {
     it('should create a section as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', instructorToken)
         .send({ title: 'Intro to Bachata', orderIndex: 1 })
         .expect(201);
@@ -234,7 +243,7 @@ describe('Section Routes', () => {
     it('should create a section as ADMIN', async () => {
       const adminToken = await createToken('ADMIN');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', adminToken)
         .send({ title: 'Intro to Salsa', orderIndex: 0 })
         .expect(201);
@@ -246,7 +255,7 @@ describe('Section Routes', () => {
     it('should return 400 for invalid body', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const res = await request(app)
-        .post(`/modules/${testModuleId}/sections`)
+        .post(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', instructorToken)
         .send({ title: '' })
         .expect(400);
@@ -255,7 +264,7 @@ describe('Section Routes', () => {
     });
   });
 
-  describe('GET /modules/:moduleId/sections', () => {
+  describe('GET /courses/:courseId/modules/:moduleId/sections', () => {
     it('should return paginated list of sections for a module', async () => {
       const studentToken = await createToken('STUDENT');
       // Create two sections
@@ -275,7 +284,7 @@ describe('Section Routes', () => {
       });
 
       const res = await request(app)
-        .get(`/modules/${testModuleId}/sections`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .set('Authorization', studentToken)
         .expect(200);
 
@@ -302,7 +311,7 @@ describe('Section Routes', () => {
       });
 
       const res = await request(app)
-        .get(`/modules/${testModuleId}/sections`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .query({ search: 'introduction' })
         .set('Authorization', studentToken)
         .expect(200);
@@ -329,7 +338,7 @@ describe('Section Routes', () => {
       });
 
       const res = await request(app)
-        .get(`/modules/${testModuleId}/sections`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections`)
         .query({ orderBy: 'title', sortOrder: 'asc' })
         .set('Authorization', studentToken)
         .expect(200);
@@ -340,7 +349,7 @@ describe('Section Routes', () => {
     });
   });
 
-  describe('GET /modules/:moduleId/sections/:sectionId', () => {
+  describe('GET /courses/:courseId/modules/:moduleId/sections/:sectionId', () => {
     it('should return a section with its details', async () => {
       const studentToken = await createToken('STUDENT');
       const section = await prisma.section.create({
@@ -354,7 +363,7 @@ describe('Section Routes', () => {
       });
 
       const res = await request(app)
-        .get(`/modules/${testModuleId}/sections/${section.id}`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/${section.id}`)
         .set('Authorization', studentToken)
         .expect(200);
 
@@ -367,7 +376,7 @@ describe('Section Routes', () => {
     it('should return 404 for a non-existent section', async () => {
       const studentToken = await createToken('STUDENT');
       await request(app)
-        .get(`/courses/${course.id}/modules/${testModuleId}/sections/non-existent-id`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/non-existent-id`)
         .set('Authorization', studentToken)
         .expect(404);
     });
@@ -390,13 +399,13 @@ describe('Section Routes', () => {
       });
 
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${otherSection.id}`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/${otherSection.id}`)
         .set('Authorization', studentToken)
         .expect(404);
     });
   });
 
-  describe('PATCH /modules/:moduleId/sections/:sectionId', () => {
+  describe('PATCH /courses/:courseId/modules/:moduleId/sections/:sectionId', () => {
     it('should update a section as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const section = await prisma.section.create({
@@ -408,7 +417,7 @@ describe('Section Routes', () => {
       });
 
       const res = await request(app)
-        .patch(`/modules/${testModuleId}/sections/${section.id}`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${section.id}`)
         .set('Authorization', instructorToken)
         .send({ title: 'Updated Title', orderIndex: 5 })
         .expect(200);
@@ -420,7 +429,7 @@ describe('Section Routes', () => {
     it('should return 404 when updating a non-existent section', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/non-existent-id`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/non-existent-id`)
         .set('Authorization', instructorToken)
         .send({ title: 'Nope' })
         .expect(404);
@@ -440,17 +449,18 @@ describe('Section Routes', () => {
           title: 'Other Section',
           orderIndex: 0,
           moduleId: otherModule.id,
+        },
       });
 
       await request(app)
-        .patch(`/courses/${course.id}/modules/${testModuleId}/sections/${otherSection.id}`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${otherSection.id}`)
         .set('Authorization', instructorToken)
         .send({ title: 'Hacked' })
         .expect(404);
     });
   });
 
-  describe('DELETE /modules/:moduleId/sections/:sectionId', () => {
+describe('DELETE /courses/:courseId/modules/:moduleId/sections/:sectionId', () => {
     it('should delete a section as INSTRUCTOR', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       const section = await prisma.section.create({
@@ -462,7 +472,7 @@ describe('Section Routes', () => {
       });
 
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/${section.id}`)
+        .delete(`/courses/${testCourseId}/modules/${testModuleId}/sections/${section.id}`)
         .set('Authorization', instructorToken)
         .expect(204);
 
@@ -473,7 +483,7 @@ describe('Section Routes', () => {
     it('should return 404 when deleting a non-existent section', async () => {
       const instructorToken = await createToken('INSTRUCTOR');
       await request(app)
-        .delete(`/modules/${testModuleId}/sections/non-existent-id`)
+        .delete(`/courses/${testCourseId}/modules/${testModuleId}/sections/non-existent-id`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
@@ -492,15 +502,13 @@ describe('Section Routes', () => {
           title: 'Other Section',
           orderIndex: 0,
           moduleId: otherModule.id,
-},
-      );
+        },
+      });
 
       await request(app)
-        .delete(`/courses/${course.id}/modules/${testModuleId}/sections/${otherSection.id}`)
+        .delete(`/courses/${testCourseId}/modules/${testModuleId}/sections/${otherSection.id}`)
         .set('Authorization', instructorToken)
         .expect(404);
     });
-  });
-});
   });
 });

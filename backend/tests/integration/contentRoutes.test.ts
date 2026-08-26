@@ -35,6 +35,7 @@ async function createToken(role: string): Promise<string> {
 }
 
 describe('Content Routes', () => {
+  let testCourseId: string;
   let testModuleId: string;
   let testSectionId: string;
 
@@ -44,13 +45,19 @@ describe('Content Routes', () => {
     await prisma.userProgress.deleteMany();
     await prisma.videoMetadata.deleteMany();
     await prisma.section.deleteMany();
-    await prisma.session.deleteMany();
     await prisma.module.deleteMany();
+    await prisma.course.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
 
-    // Create a test module and section to use for content operations
+    // Create a test course, module and section to use for content operations
+    const course = await prisma.course.create({
+      data: { name: 'Test Course' },
+    });
+    testCourseId = course.id;
+
     const module = await prisma.module.create({
-      data: { title: 'Test Module', orderIndex: 0 },
+      data: { title: 'Test Module', orderIndex: 0, courseId: course.id },
     });
     testModuleId = module.id;
 
@@ -65,12 +72,16 @@ describe('Content Routes', () => {
     testSectionId = section.id;
   });
 
-  describe('GET /modules/:moduleId/sections/:sectionId/content', () => {
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  describe('GET /courses/:courseId/modules/:moduleId/sections/:sectionId/content', () => {
     it('should return markdown content for a section when authenticated as student', async () => {
       const token = await createToken('STUDENT');
 
       const response = await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/content`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/${testSectionId}/content`)
         .set('Authorization', token)
         .expect(200);
 
@@ -80,7 +91,7 @@ describe('Content Routes', () => {
 
     it('should return 401 when not authenticated', async () => {
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${testSectionId}/content`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/${testSectionId}/content`)
         .expect(401);
     });
 
@@ -89,19 +100,19 @@ describe('Content Routes', () => {
       const fakeSectionId = '00000000-0000-0000-0000-000000000000';
 
       await request(app)
-        .get(`/modules/${testModuleId}/sections/${fakeSectionId}/content`)
+        .get(`/courses/${testCourseId}/modules/${testModuleId}/sections/${fakeSectionId}/content`)
         .set('Authorization', token)
         .expect(404);
     });
   });
 
-  describe('PATCH /modules/:moduleId/sections/:sectionId/content', () => {
+  describe('PATCH /courses/:courseId/modules/:moduleId/sections/:sectionId/content', () => {
     it('should update markdown content when authenticated as instructor', async () => {
       const token = await createToken('INSTRUCTOR');
-      const newContent = '# Updated content\\nThis is the updated markdown.';
+      const newContent = '# Updated content\nThis is the updated markdown.';
 
       const response = await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/content`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${testSectionId}/content`)
         .set('Authorization', token)
         .send({ markdownContent: newContent })
         .expect(200);
@@ -114,7 +125,7 @@ describe('Content Routes', () => {
       const token = await createToken('STUDENT');
 
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/content`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${testSectionId}/content`)
         .set('Authorization', token)
         .send({ markdownContent: '# Updated' })
         .expect(403);
@@ -122,7 +133,7 @@ describe('Content Routes', () => {
 
     it('should return 401 when not authenticated', async () => {
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/content`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${testSectionId}/content`)
         .send({ markdownContent: '# Updated' })
         .expect(401);
     });
@@ -131,7 +142,7 @@ describe('Content Routes', () => {
       const token = await createToken('INSTRUCTOR');
 
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${testSectionId}/content`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${testSectionId}/content`)
         .set('Authorization', token)
         .send({ markdownContent: 123 }) // invalid type
         .expect(400);
@@ -142,7 +153,7 @@ describe('Content Routes', () => {
       const fakeSectionId = '00000000-0000-0000-0000-000000000000';
 
       await request(app)
-        .patch(`/modules/${testModuleId}/sections/${fakeSectionId}/content`)
+        .patch(`/courses/${testCourseId}/modules/${testModuleId}/sections/${fakeSectionId}/content`)
         .set('Authorization', token)
         .send({ markdownContent: '# Updated' })
         .expect(404);
