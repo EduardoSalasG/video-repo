@@ -15,6 +15,9 @@ vi.mock('../../src/config/database', () => {
         findMany: vi.fn(),
         count: vi.fn(),
       },
+      section: {
+        findUnique: vi.fn(),
+      },
     },
   };
 });
@@ -33,6 +36,7 @@ describe('userProgress model', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (prisma.section.findUnique as jest.Mock).mockResolvedValue({ id: 's1', isDeleted: false });
   });
 
   describe('upsertUserProgress', () => {
@@ -83,14 +87,18 @@ describe('userProgress model', () => {
 
   describe('getUserProgressBySection', () => {
     it('should return progress when found', async () => {
-      (prisma.userProgress.findUnique as jest.Mock).mockResolvedValue(progressStub);
+      (prisma.userProgress.findUnique as jest.Mock).mockResolvedValue({
+        ...progressStub,
+        section: { isDeleted: false },
+      });
 
       const result = await getUserProgressBySection('u1', 's1');
 
       expect(prisma.userProgress.findUnique).toHaveBeenCalledWith({
         where: { userId_sectionId: { userId: 'u1', sectionId: 's1' } },
+        include: { section: { select: { isDeleted: true } } },
       });
-      expect(result).toBe(progressStub);
+      expect(result).toEqual({ ...progressStub, section: { isDeleted: false } });
     });
 
     it('should return null when not found', async () => {
@@ -111,14 +119,14 @@ describe('userProgress model', () => {
 
       expect(prisma.userProgress.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId: 'u1' },
+          where: { userId: 'u1', section: { isDeleted: false } },
           orderBy: { updatedAt: 'desc' },
           skip: 0,
           take: 10,
         })
       );
       expect(prisma.userProgress.count).toHaveBeenCalledWith({
-        where: { userId: 'u1' },
+        where: { userId: 'u1', section: { isDeleted: false } },
       });
       expect(result.progress).toHaveLength(1);
       expect(result.progress[0].id).toBe('p1');
@@ -132,10 +140,10 @@ describe('userProgress model', () => {
       await findAllUserProgress('u1');
 
       expect(prisma.userProgress.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 0, take: 10, where: { userId: 'u1' } })
+        expect.objectContaining({ skip: 0, take: 10, where: { userId: 'u1', section: { isDeleted: false } } })
       );
       expect(prisma.userProgress.count).toHaveBeenCalledWith({
-        where: { userId: 'u1' },
+        where: { userId: 'u1', section: { isDeleted: false } },
       });
     });
   });
