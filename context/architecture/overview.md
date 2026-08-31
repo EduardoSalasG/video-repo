@@ -1,30 +1,7 @@
-# Architecture Overview
+# Visión general de arquitectura
 
-## System Description
-[High-level description of the system, its purpose, and key capabilities]
+La fuente de verdad del estado implementado es [Sistema actual](current-system.md). `video-repo` separa una aplicación Next.js de una API Express que persiste currículo y progreso con Prisma/PostgreSQL.
 
-## Component Diagram
-```mermaid
-graph TD
-    A[Component A] --> B[Component B]
-    B --> C[Component C]
-```
+La frontera pública es HTTP. El frontend usa un proxy de Next para preservar la cookie `httpOnly`. El dominio de contenido se organiza como `Course → Module → Section → VideoMetadata`; el acceso combina roles globales y permisos por curso.
 
-## Key Design Decisions
-- [Decision 1 with link to ADR]
-- [Decision 2 with link to ADR]
-
-## Technology Stack
-| Layer | Technology | Version | Rationale |
-|-------|------------|---------|-----------|
-| Runtime | Node.js | 20.x | LTS, performance |
-| Language | TypeScript | 5.x | Type safety |
-| Framework | [Framework] | [Version] | [Reason] |
-| Database | [Database] | [Version] | [Reason] |
-| Testing | Vitest | Latest | Fast, TypeScript native |
-
-## Non-Functional Requirements
-- **Performance**: [Latency/throughput targets]
-- **Scalability**: [Horizontal/vertical scaling approach]
-- **Availability**: [Uptime targets, disaster recovery]
-- **Security**: [Compliance requirements]
+No hay objetivos cuantificados de rendimiento, disponibilidad u observabilidad. Tampoco se afirma arquitectura hexagonal o DDD como estado actual; son una evolución propuesta en el roadmap de ingeniería.

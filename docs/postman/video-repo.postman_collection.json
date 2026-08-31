@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "video-repo API",
+    "description": "Colección versionada de los contratos HTTP canónicos. Actualizar junto con cualquier cambio de API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "courseId", "value": "" },
+    { "key": "moduleId", "value": "" },
+    { "key": "sectionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "API root",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/" }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "exec": ["const body = pm.response.json();", "if (body.accessToken) pm.collectionVariables.set('accessToken', body.accessToken);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@dance.com\",\n  \"password\": \"password\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        { "name": "Current user", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/auth/me" } }
+      ]
+    },
+    {
+      "name": "Curriculum",
+      "item": [
+        { "name": "List courses", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses" } },
+        { "name": "List modules in course", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules" } },
+        { "name": "List sections in module", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules/{{moduleId}}/sections" } },
+        { "name": "Get video metadata", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules/{{moduleId}}/sections/{{sectionId}}/video-metadata" } }
+      ]
+    },
+    {
+      "name": "Learning progress",
+      "item": [
+        { "name": "Get progress for section", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/sections/{{sectionId}}/progress" } },
+        { "name": "Update position", "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"lastPositionSeconds\": 30\n}" }, "url": "{{baseUrl}}/sections/{{sectionId}}/progress" } }
+      ]
+    }
+  ]
+}

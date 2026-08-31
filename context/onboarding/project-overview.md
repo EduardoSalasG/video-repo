@@ -1,40 +1,28 @@
-# Project Overview
+# Visión del proyecto
 
-## What is this?
-[Product description — what does it do, who is it for]
+`video-repo` es una plataforma web de educación de baile. Ofrece autenticación, catálogo de cursos, gestión de módulos/secciones/vídeo, permisos por curso y seguimiento de progreso.
 
-## Architecture Summary
-[Brief overview referencing context/architecture/overview.md]
+Lee primero [AGENTS.md](../../AGENTS.md), después [Sistema actual](../architecture/current-system.md), [API](../../docs/api.md) y [esquema](../../docs/schema.md). Los documentos bajo `docs/superpowers/` son históricos.
 
-## Agent Roles
-See `context/onboarding/agent-roles.md`
+## Directorios clave
 
-## Key Directories
-| Directory | Purpose |
-|-----------|---------|
-| `src/` | Application source code |
-| `tests/` | All tests |
-| `context/` | Project knowledge (read-only) |
-| `memory/` | Agent state (read/write) |
-| `.opencode/` | Opencode configuration |
+| Directorio | Responsabilidad |
+|---|---|
+| `frontend/` | Aplicación Next.js y pruebas de interfaz |
+| `backend/` | API Express, Prisma, validadores y pruebas |
+| `backend/prisma/` | Esquema, migraciones y seed |
+| `context/` | Arquitectura, convenciones y decisiones vigentes |
+| `docs/` | Contratos, esquema, Postman y roadmaps |
 
-## Getting Started
-1. Read `AGENTS.md` for full instructions
-2. Review `context/architecture/overview.md`
-3. Check `context/conventions/coding-standards.md`
-4. Run `npm install`
-5. Run `npm run dev` to start development
+## Arranque local actual
 
-## Key Commands
-```bash
-npm run dev        # Start dev server
-npm run build      # Build for production
-npm run typecheck  # Type checking
-npm run lint       # Linting
-npm test           # Run tests
+```powershell
+npm install
+npm run db:start
+npm run prisma:migrate --workspace backend
+npm run seed --workspace backend
+npm run dev --workspace backend
+npm run dev --workspace frontend
 ```
 
-## Common Tasks
-- New feature: Coordinator creates task → Architect specs → Implementer codes → Tester tests → Reviewer reviews
-- Bug fix: Implementer reproduces → Fixes → Tester verifies → Reviewer reviews
-- Research: Researcher investigates → Documents in context/decisions/ or memory/learnings/
+Los scripts `db:*` actuales usan `docker run`; Docker Compose y la inicialización automática de esquema/seed son trabajo pendiente del roadmap, no capacidades actuales.

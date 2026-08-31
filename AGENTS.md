@@ -1,229 +1,90 @@
 # AGENTS.md
 
-Multi-agent software development project for opencode.
+## Propósito y contexto
 
-## Project Overview
+`video-repo` es un monorepo npm para una plataforma de educación de baile: una API REST y una aplicación web que consumen el mismo modelo de cursos, módulos, secciones, vídeo y progreso. Antes de editar, identifica el flujo afectado, las capas involucradas y los contratos que pueden cambiar.
 
-Monorepo with two workspaces:
+Las instrucciones de `frontend/AGENTS.md` y `backend/AGENTS.md` complementan esta guía y prevalecen para los archivos de sus respectivos directorios.
 
-- `backend/` — REST API (Express + Prisma + PostgreSQL), see `backend/package.json`
-- `frontend/` — React SPA (Vite + TypeScript + Tailwind), see `frontend/package.json`
+## Mapa del repositorio
 
-Root `package.json` uses npm workspaces; run workspace commands with `npm run <script> --workspace backend` (or `--workspace frontend`). The root `verify`/`typecheck`/`lint`/`test` scripts run across all workspaces.
+- `backend/`: API Express, Prisma, PostgreSQL, Zod y autenticación JWT con control de acceso por rol.
+- `frontend/`: Next.js 15 App Router, React 19, TypeScript y Tailwind; accede a la API mediante `/api/proxy/[...path]`.
+- `backend/prisma/`: esquema, migraciones, generación de cliente y datos de semilla.
+- `context/`: arquitectura, decisiones, convenciones y especificaciones del proyecto.
+- `docs/`: contratos de API y esquema, además de diseños y planes históricos en `docs/superpowers/`.
+- `.github/workflows/ci.yml`: validación continua para las ramas `main` y `develop`.
 
-This project is developed by a coordinated multi-agent system. Each agent has a specialized role:
+No añadas otro `AGENTS.md` salvo que una regla sea específica de un subárbol y no aplique al resto del repositorio.
 
-- **architect** — System design, architecture decisions, tech stack choices
-- **implementer** — Feature implementation, bug fixes, code changes
-- **reviewer** — Code review, security audit, quality assurance
-- **tester** — Test generation, test execution, coverage analysis
-- **researcher** — Investigation, spike tasks, technology evaluation
-- **coordinator** — Task decomposition, agent orchestration, progress tracking
+## Comandos verificados
 
-## Agent Coordination
+Ejecuta los comandos desde la raíz. Prefiere el workspace afectado antes de ampliar la verificación.
 
-Agents collaborate through:
-1. **Context files** in `context/` — Shared project knowledge (read-only for agents)
-2. **Memory files** in `memory/` — Persistent agent state (read/write per agent)
-3. **Task handoffs** via `memory/project-state/active-tasks.md`
-4. **Session transcripts** in `memory/sessions/`
+- Instalar dependencias: `npm install`
+- Iniciar PostgreSQL local: `npm run db:start`
+- Detener PostgreSQL local: `npm run db:stop`
+- Iniciar backend: `npm run dev --workspace backend`
+- Iniciar frontend: `npm run dev --workspace frontend`
+- Preparar/aplicar migraciones: `npm run prisma:migrate --workspace backend`
+- Generar cliente Prisma: `npm run prisma:generate --workspace backend`
+- Build backend: `npm run build --workspace backend`
+- Build frontend: `npm run build --workspace frontend`
+- Verificación de un workspace: `npm run verify --workspace backend` o `npm run verify --workspace frontend`
+- Verificación de todos los workspaces: `npm run verify`
 
-## Build & Test Commands
+Para un cambio acotado, ejecuta primero `typecheck`, `lint` y/o `test` del workspace afectado. No afirmes que una comprobación pasó si no se ejecutó y terminó correctamente.
 
-```bash
-# Install dependencies (root workspaces)
-npm install
+## Flujo de trabajo
 
-# Development (defaults to backend)
-npm run dev --workspace backend
-npm run dev --workspace frontend
+1. Lee el código, la documentación y los cambios locales relevantes antes de editar; busca antes de leer grandes porciones del repositorio.
+2. Para cambios no triviales, define alcance, módulos afectados, riesgos, contratos, impacto en datos y documentación, y criterios de aceptación.
+3. Implementa la menor unidad coherente; no mezcles refactors, limpieza ni cambios locales ajenos.
+4. Actualiza pruebas, contratos y documentación cuando el cambio los afecte.
+5. Revisa `git diff` y verifica la superficie afectada; amplía a build o verificación completa según el riesgo.
+6. Comunica los comandos ejecutados, su resultado y cualquier brecha de verificación pendiente.
 
-# Build / typecheck / lint / test per workspace
-npm run build --workspace backend
-npm run typecheck --workspace backend
-npm run lint --workspace backend
-npm test --workspace backend
+Usa los flujos de Superpowers para el proceso: `systematic-debugging` ante errores, fallos de pruebas o comportamiento inesperado; `verification-before-completion` antes de declarar un trabajo terminado.
 
-# Across all workspaces
-npm run typecheck
-npm run lint
-npm test
-```
+## Reglas de implementación
 
-## Code Style
+- Sigue los patrones existentes y reutiliza tipos, esquemas, validadores y helpers canónicos antes de crear alternativas.
+- Trata los diagnósticos de TypeScript como autoritativos. No uses `any`, `@ts-ignore` ni casts inseguros para silenciarlos.
+- No inventes rutas, exports, aliases, APIs, esquemas ni convenciones: inspecciona primero el módulo y su configuración.
+- No cambies configuración global de TypeScript o resolución de módulos para resolver un problema local sin haber probado que es la causa.
 
-- TypeScript strict mode enabled
-- ESLint + Prettier configured
-- Single quotes, no semicolons (Prettier)
-- Functional patterns preferred over classes
-- Explicit error handling with custom error types
-- All async functions must handle errors
+### API, autenticación y contratos
 
-## Testing Strategy
+- Mantén los contratos, validación Zod, manejo de errores y tipos consistentes entre backend, proxy y frontend.
+- El token `video_repo_token` es una cookie httpOnly: no lo expongas al JavaScript del cliente ni evites el proxy autenticado sin un patrón existente que lo justifique.
+- Conserva autenticación y autorización; no las debilites para que pase una prueba o una solicitud.
+- Si cambia un contrato público, actualiza `docs/api.md`, la colección `docs/postman/video-repo.postman_collection.json`, los helpers/clientes afectados y las pruebas pertinentes; evalúa compatibilidad antes de retirar una ruta o forma de respuesta.
 
-- Unit tests: `backend/tests/unit/` — Test individual functions/modules
-- Integration tests: `backend/tests/integration/` — Test component interactions
-- E2E tests: `backend/tests/e2e/` — Test full user flows
-- TDD: Write failing test first, then implementation
-- Target: >80% coverage on critical paths
+### Datos y persistencia
 
-## Agent Workflow
+- No modifiques el esquema Prisma ni crees migraciones salvo que formen parte del cambio solicitado o sean la causa demostrada.
+- Todo cambio de esquema requiere una migración versionada y revisable; considera seeds, bootstrap, compatibilidad y recuperación de datos existentes.
+- Todo incremento de esquema se entrega mediante migraciones Prisma versionadas; no uses `prisma db push` para entornos compartidos, CI o despliegues.
+- El bootstrap del backend debe validar/aplicar migraciones y usar sólo seeds idempotentes; no asumas que este comportamiento existe sin verificarlo.
+- No ejecutes operaciones destructivas de base de datos ni elimines datos sin autorización explícita.
 
-1. **Coordinator** receives task, decomposes into subtasks
-2. **Architect** reviews/creates PRD in `context/specs/`
-3. **Architect** creates technical spec from PRD
-4. **Implementer** writes code following `context/conventions/`
-5. **Tester** generates/updates tests
-6. **Reviewer** reviews code, checks against rules
-7. **Coordinator** verifies completion, updates project state
+### Interfaz
 
-## PRD (Product Requirements Document) Usage
+- Conserva las convenciones de App Router y los límites entre Server y Client Components.
+- Mantén el sistema de diseño y los patrones de accesibilidad existentes; valida estados de carga, vacío, error y permisos cuando el flujo cambie.
+- No combines cambios funcionales con una limpieza visual no relacionada.
 
-### When to Create a PRD
-- New product initiatives
-- Major feature epics
-- Significant changes affecting multiple components
-- Stakeholder alignment needed before technical design
+## Entrega y Definition of Done
 
-### PRD Location & Format
-- **Template**: `context/specs/PRD-TEMPLATE.md`
-- **Storage**: `context/specs/prd-<feature-name>.md`
-- **Format**: Markdown with structured sections (see template)
+- Las aplicaciones o paquetes afectados compilan y pasan las verificaciones relevantes, o la brecha se declara explícitamente con su causa.
+- Las pruebas, contratos, migraciones y documentación se actualizan cuando corresponde.
+- Cada mejora, feature o cambio actualiza en el mismo diff la documentación afectada y, si toca la API, la colección Postman versionada.
+- El diff fue revisado y no incluye secretos, archivos generados ni cambios ajenos.
+- Para cambios dirigidos a `main`, sigue `context/conventions/git-workflow.md`: revisión, CI verde y squash merge.
 
-### PRD → Spec Flow
-```
-PRD (context/specs/prd-*.md)
-    �� Architect analyzes
-Technical Spec (context/specs/<feature>-spec.md)
-    �� Implementer implements
-Code + Tests (backend/src/, backend/tests/)
-```
+## Mantenimiento de esta guía
 
-### PRD Sections Required
-1. Executive Summary
-2. Problem Statement + Goals/Metrics
-3. User Personas & Stories
-4. Functional Requirements (with acceptance criteria)
-5. Non-Functional Requirements
-6. Technical Requirements
-7. Release Plan + Rollout Strategy
-8. Risks & Mitigations
-
-## Memory & Context Usage
-
-### Reading Context (All Agents)
-- `context/architecture/` — System design, patterns, data flow
-- `context/decisions/` — ADRs for architectural choices
-- `context/specs/` — PRDs and technical specifications
-- `context/conventions/` — Coding standards, workflows
-- `context/onboarding/` — Project overview, agent roles
-
-### Writing Memory (Per Agent)
-Each agent maintains memory in `memory/agents/<agent-name>/`:
-- `MEMORY.md` — Index + key learnings (loaded every session)
-- Topic files — Detailed notes (loaded on demand)
-
-### Project State (Coordinator)
-- `memory/project-state/active-tasks.md` — Current work items
-- `memory/project-state/recent-changes.md` — Recent modifications
-- `memory/project-state/open-issues.md` — Known issues/blockers
-
-## Security & Compliance
-
-- No secrets in code — use environment variables
-- All external inputs validated at API boundaries
-- Authentication required for all mutating operations
-- Audit logging for sensitive operations
-- Dependencies scanned for vulnerabilities
-
-## Git Workflow (Simplified Gitflow + Conventional Commits)
-
-### Branching Model
-```
-main (production-ready, tagged releases)
-  ↑ merge --no-ff
-develop (integration branch for next release)
-  ↑ feature branches
-feature/<agent>-<task-id>-<short-desc>
-  ↑ release branches (from develop)
-release/v<major>.<minor>.<patch>
-  ↑ hotfix branches (from main)
-hotfix/v<major>.<minor>.<patch>
-```
-
-### Branch Types & Rules
-
-| Branch | From | Merge To | Lifetime | Naming |
-|--------|------|----------|----------|--------|
-| `main` | — | — | Permanent | `main` |
-| `develop` | `main` | — | Permanent | `develop` |
-| Feature | `develop` | `develop` | Temporary | `feature/<agent>-<task-id>-<desc>` |
-| Release | `develop` | `main` + `develop` | Temporary | `release/v<version>` |
-| Hotfix | `main` | `main` + `develop` | Temporary | `hotfix/v<version>` |
-
-### Commit Message Format (Conventional Commits)
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`
-
-**Agent Attribution** (in body/footer, not type):
-```
-feat(api): add user authentication endpoint
-
-Implements user login with JWT tokens.
-
-Co-authored-by: implementer <agent@implementer>
-Refs: TASK-123
-```
-
-### Examples
-```
-feat(auth): add JWT-based authentication
-fix(cache): resolve race condition in Redis cache
-docs(spec): add PRD template for feature requirements
-refactor(api): extract validation middleware
-test(unit): add tests for user service
-chore(deps): update TypeScript to 5.3
-```
-
-### Breaking Changes
-```
-feat(api)!: remove deprecated /v1/users endpoint
-
-BREAKING CHANGE: /v1/users replaced by /v2/users with new schema
-```
-
-### PR Process
-1. Create feature branch from `develop`
-2. Make atomic commits with Conventional Commits format
-3. Push branch, create PR targeting `develop`
-4. CI runs: lint, typecheck, tests
-5. Reviewer approves (required)
-6. Squash merge to `develop` (preserves clean history)
-7. Delete feature branch
-
-### Release Process
-1. Create `release/v<version>` from `develop`
-2. Bump version, update CHANGELOG
-3. Test, fix bugs on release branch
-4. Merge to `main` with `--no-ff`, tag `v<version>`
-5. Merge back to `develop`
-6. Delete release branch
-
-### Hotfix Process
-1. Create `hotfix/v<version>` from `main` tag
-2. Fix bug, bump patch version
-3. Merge to `main` with `--no-ff`, tag `v<version>`
-4. Merge to `develop` (or current release branch)
-5. Delete hotfix branch
-
-### Git Hooks (Configured in .opencode/settings.json)
-- `pre-commit`: lint + typecheck on staged files
-- `commit-msg`: validate Conventional Commits format
-- `pre-push`: run tests
+- Mantén instrucciones breves, específicas del repositorio y comprobables con archivos o comandos reales.
+- Enlaza a la documentación fuente en lugar de duplicar detalles que cambian con frecuencia.
+- Actualiza o elimina una instrucción cuando se vuelva inexacta.
+- Ante un error recurrente, prefiere automatizar su prevención con una prueba, lint, script o CI antes de añadir otra regla.

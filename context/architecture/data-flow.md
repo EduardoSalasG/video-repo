@@ -1,34 +1,16 @@
-# Data Flow
+# Flujo de datos
 
-## Overview
-[High-level data flow description]
+El diagrama de componentes está en [Sistema actual](current-system.md).
 
-## Key Flows
+## Lectura de currículo
 
-### Flow 1: [Name]
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant Service
-    participant Database
-    Client->>API: Request
-    API->>Service: Process
-    Service->>Database: Query
-    Database-->>Service: Data
-    Service-->>API: Result
-    API-->>Client: Response
-```
+1. La página de Next obtiene la sesión en el servidor.
+2. El proxy toma `video_repo_token` de la cookie y crea el Bearer hacia Express.
+3. Express autentica, evalúa la policy del curso, módulo o sección y consulta Prisma.
+4. El JSON vuelve por el proxy a la página o componente.
 
-**Components**: [List components involved]
-**Data Transformations**: [Describe transformations]
-**Error Handling**: [Describe error flow]
+## Escritura de progreso
 
-### Flow 2: [Name]
-[Similar structure]
+Las rutas por sección usan el usuario autenticado y no un `userId` provisto por el cliente. `UserProgress` tiene unicidad compuesta por usuario y sección, por lo que la operación puede expresarse como upsert.
 
-## Data Models
-[Reference to TypeScript types/schemas]
-
-## Event Flow
-[If event-driven, describe event flow]
+Zod valida entrada y las policies cortan la petición antes de los controladores. Los códigos y contratos públicos están en [docs/api.md](../../docs/api.md).

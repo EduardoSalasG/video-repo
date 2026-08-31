@@ -1,25 +1,12 @@
-# Design Patterns
+# Patrones y convenciones actuales
 
-## Creational Patterns
-- **Factory**: Used for [use case] — see `src/factories/`
-- **Builder**: Used for [use case] — see `src/builders/`
+- **Capas de backend:** ruta → middleware → controlador → modelo/servicio → Prisma.
+- **Proxy/BFF ligero:** route handlers de Next reenvían peticiones autenticadas a Express.
+- **Validación en frontera:** Zod valida entradas HTTP.
+- **Autorización por policy:** la policy usa el recurso padre de la jerarquía de contenido.
+- **Borrado lógico:** currículo y progreso usan `isDeleted`/`deletedAt`; las consultas deben respetarlos.
+- **Upsert:** acceso por curso y progreso tienen claves compuestas que permiten operaciones idempotentes por usuario y recurso.
 
-## Structural Patterns
-- **Adapter**: Used for [external service integration]
-- **Decorator**: Used for [cross-cutting concerns like logging]
+## Evolución propuesta
 
-## Behavioral Patterns
-- **Strategy**: Used for [algorithm variations] — see `src/strategies/`
-- **Observer**: Used for [event-driven communication] — see `src/events/`
-
-## Architectural Patterns
-- **Layered Architecture**: [domain/app/infra layers]
-- **Repository Pattern**: Data access abstraction
-- **CQRS**: [if applicable] Command/Query separation
-- **Event Sourcing**: [if applicable] State from event log
-
-## Anti-Patterns to Avoid
-- God objects/classes
-- Circular dependencies
-- Leaky abstractions
-- Premature optimization
+Introducir puertos/adaptadores y casos de uso sólo donde aporte valor, empezando por acceso a cursos y progreso. Los contextos candidatos son Identidad y Acceso, Currículo, Progreso de aprendizaje y Medios. No etiquetar el código como DDD o hexagonal hasta implementar y probar esos límites.
