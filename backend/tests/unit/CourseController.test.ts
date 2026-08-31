@@ -10,7 +10,7 @@ describe('Course Controller', () => {
   let mockRes: any;
 
   beforeEach(() => {
-    mockReq = { params: {}, query: {}, body: {} };
+    mockReq = { params: {}, query: {}, body: {}, user: { id: 'admin-1', role: 'ADMIN' } };
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
@@ -20,10 +20,14 @@ describe('Course Controller', () => {
 
   describe('GET /courses', () => {
     it('should return empty array when no courses exist', async () => {
-      (CourseService.findAllCourses as jest.Mock).mockResolvedValue([]);
+      (CourseService.findAllCoursesPaginated as jest.Mock).mockResolvedValue({
+        courses: [],
+        pagination: { page: 1, limit: 12, total: 0, pages: 0 },
+      });
       await CourseController.getAllCourses(mockReq, mockRes);
       expect(mockRes.json).toHaveBeenCalledWith({
         courses: [],
+        pagination: { page: 1, limit: 12, total: 0, pages: 0 },
       });
     });
   });

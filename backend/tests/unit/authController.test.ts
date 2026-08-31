@@ -69,6 +69,7 @@ describe('authController', () => {
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
+      cookie: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -178,6 +179,11 @@ describe('authController', () => {
 
       await login(mockReq, mockRes);
 
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'video_repo_token',
+        'faketoken',
+        expect.objectContaining({ httpOnly: true, sameSite: 'lax' })
+      );
       expect(mockRes.json).toHaveBeenCalledWith({
         accessToken: 'faketoken',
         user: {

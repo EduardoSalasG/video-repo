@@ -178,9 +178,8 @@ describe('videoController', () => {
   describe('createVideoMetadataController', () => {
     it('should create video metadata and return 201', async () => {
       (createVideoMetadataMock as jest.Mock).mockResolvedValue(videoMetadataStub);
-      mockReq.params = {}; // No params needed for create
+      mockReq.params = { sectionId: 's1' };
       mockReq.body = {
-        sectionId: 's1',
         steps: [{ step: 'basic step', count: 4 }],
         difficulty: 'BEGINNER',
         primaryStyle: 'MAMBO_ON2',
