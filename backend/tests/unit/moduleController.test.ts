@@ -10,6 +10,11 @@ import { ModuleService } from '../../src/services/ModuleService';
 
 // Mock ModuleService
 vi.mock('../../src/services/ModuleService');
+vi.mock('../../src/config/database', () => ({
+  default: { courseUserAccess: { findFirst: vi.fn() } },
+}));
+
+import prisma from '../../src/config/database';
 
 describe('moduleController', () => {
   let mockReq: any;
@@ -34,13 +39,14 @@ describe('moduleController', () => {
   };
 
   beforeEach(() => {
-    mockReq = { body: {}, params: {}, query: {} };
+    mockReq = { body: {}, params: {}, query: {}, user: { id: 'admin-1', role: 'ADMIN' } };
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
       send: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
+    (prisma.courseUserAccess.findFirst as jest.Mock).mockResolvedValue(null);
   });
 
   describe('getModules', () => {
