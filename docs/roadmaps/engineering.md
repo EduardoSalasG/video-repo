@@ -22,9 +22,9 @@ _Prioridades técnicas para llevar el estado actual a una plataforma operable. N
 
 ## E2 — Dockerización y comandos operables
 
-1. Crear `docker-compose.yml` para PostgreSQL, backend y frontend, con healthchecks, dependencias de arranque, volúmenes nombrados y configuración por `.env`/`.env.example` sin secretos versionados.
-2. Integrar el bootstrap de E1 en el servicio backend; documentar claramente qué corre en cada inicio y cómo diagnosticar fallos.
-3. Reemplazar los scripts dependientes de una ruta Windows fija por comandos portables: `npm run stack:up`, `stack:down`, `stack:logs`, `stack:build`, `db:migrate` y `db:seed`.
+1. Hecho: `docker-compose.yml` orquesta PostgreSQL, backend y frontend, con healthcheck, dependencia de arranque, volumen nombrado y `.env.example` sin secretos reales.
+2. Hecho: Compose entrega la URL interna de PostgreSQL al bootstrap; el frontend usa una URL pública en navegador y otra interna en el proxy de Next.
+3. Hecho: están disponibles `npm run stack:up`, `stack:down`, `stack:logs`, `stack:build`, `db:migrate` y `db:seed`.
 4. Verificar arranque limpio, reinicio con volumen existente, actualización con migración nueva y apagado sin borrar datos. Cualquier borrado de volumen queda como comando explícito y autorizado.
 
 **Salida:** `npm run stack:up` deja frontend, backend y PostgreSQL utilizables desde un clon nuevo, y puede repetirse sin duplicar seed ni romper el esquema.

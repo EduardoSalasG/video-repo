@@ -6,10 +6,17 @@ Monorepo de una plataforma de educación de baile. Incluye una API Express/Prism
 
 - La navegación de contenido es `Curso → Módulo → Sección → vídeo/contenido`.
 - El frontend usa `/courses` como flujo principal y un proxy autenticado de Next hacia el backend.
-- El backend espera PostgreSQL, aplica migraciones Prisma pendientes y ejecuta el seed sólo si no hay usuarios ni cursos; aún no hay Docker Compose.
+- El backend espera PostgreSQL, aplica migraciones Prisma pendientes y ejecuta el seed sólo si no hay usuarios ni cursos.
 - El seed de usuarios, cursos y accesos es idempotente en ejecuciones secuenciales; los límites de concurrencia y la validación en contenedor siguen priorizados en el [roadmap de ingeniería](docs/roadmaps/engineering.md).
 
 Arquitectura y riesgos actuales: [context/architecture/current-system.md](context/architecture/current-system.md). Contratos: [API](docs/api.md), [esquema](docs/schema.md) y [colección Postman](docs/postman/video-repo.postman_collection.json).
+
+## Stack con Docker
+
+1. Copia `.env.example` como `.env` y reemplaza `POSTGRES_PASSWORD`.
+2. Ejecuta `npm run stack:up`.
+
+El frontend queda en `http://localhost:3001`, el backend en `http://localhost:3000` y PostgreSQL permanece en la red interna. `npm run stack:down` conserva el volumen; no hay un comando de borrado de datos implícito.
 
 ## Desarrollo local actual
 

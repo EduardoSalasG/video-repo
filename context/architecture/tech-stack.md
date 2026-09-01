@@ -8,6 +8,6 @@
 | Persistencia | PostgreSQL 16 local y Prisma Client con adaptador `pg` |
 | Calidad | TypeScript, ESLint, Prettier y Vitest |
 | CI | No hay workflow activo; se definirá antes de promover cambios a `main` |
-| Contenedores | Dockerfile de backend y scripts `db:*` basados en `docker run`; sin Compose aún |
+| Contenedores | Docker Compose para PostgreSQL 16, backend y frontend; volumen nombrado y healthcheck de PostgreSQL |
 
 Las versiones exactas están en los `package.json`. No hay evidencia de monitorización, E2E, hooks de Git u orquestación Kubernetes.

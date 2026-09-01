@@ -22,7 +22,7 @@ flowchart LR
 - `frontend/`: Next.js 15, React 19, TypeScript y Tailwind. La navegación primaria es `/courses`; `/library` es legado/compatibilidad.
 - `backend/`: API REST Express con capas ruta → middleware → controller → modelo/servicio → Prisma.
 - `backend/prisma/schema.prisma`: esquema PostgreSQL.
-- Existe Dockerfile del backend. Aún no hay `docker-compose.yml` ni contenedor del frontend.
+- `docker-compose.yml` orquesta PostgreSQL, backend y frontend. PostgreSQL usa un volumen nombrado; el frontend usa la URL pública para el navegador y `BACKEND_INTERNAL_URL` para el proxy server-side.
 
 ## Modelo y acceso
 

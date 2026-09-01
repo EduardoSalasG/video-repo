@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { siteConfig } from '@/config/site'
 import { getSessionToken } from '@/lib/session'
 
-const base = siteConfig.apiUrl
+const base = process.env.BACKEND_INTERNAL_URL ?? siteConfig.apiUrl
 
 async function proxy(req: NextRequest, path: string, method: string) {
   const token = await getSessionToken()

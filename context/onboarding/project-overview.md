@@ -25,4 +25,4 @@ npm run dev --workspace backend
 npm run dev --workspace frontend
 ```
 
-Los scripts `db:*` actuales usan `docker run`. Al iniciar, el backend espera PostgreSQL, aplica migraciones pendientes y ejecuta el seed sólo si no hay usuarios ni cursos. Docker Compose sigue pendiente en el roadmap.
+Usa `.env.example` como base y `npm run stack:up` para levantar PostgreSQL, backend y frontend. Al iniciar, el backend espera PostgreSQL, aplica migraciones pendientes y ejecuta el seed sólo si no hay usuarios ni cursos. `stack:down` conserva los datos del volumen.

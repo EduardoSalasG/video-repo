@@ -19,6 +19,6 @@ La base local se inicia con `npm run db:start` y se expone en `localhost:5433`. 
 
 ## Estado operativo
 
-Antes de escuchar HTTP, el backend espera PostgreSQL, ejecuta `prisma migrate deploy` y aplica el seed sólo si no existen usuarios ni cursos. El seed de usuarios, cursos y accesos es idempotente en ejecuciones secuenciales. Todavía no hay Compose; la validación del flujo dentro de la imagen y los comandos portables restantes están priorizados en el [roadmap de ingeniería](../docs/roadmaps/engineering.md).
+Antes de escuchar HTTP, el backend espera PostgreSQL, ejecuta `prisma migrate deploy` y aplica el seed sólo si no existen usuarios ni cursos. El seed de usuarios, cursos y accesos es idempotente en ejecuciones secuenciales. Compose entrega `DATABASE_URL` usando el hostname interno `postgres`; no uses `localhost` dentro del contenedor.
 
 Las reglas específicas están en [AGENTS.md](AGENTS.md).
