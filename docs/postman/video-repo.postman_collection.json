@@ -46,6 +46,7 @@
         { "name": "Get accessible module (compatibility)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/modules/{{moduleId}}" } },
         { "name": "List modules in course", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules" } },
         { "name": "List sections in module", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules/{{moduleId}}/sections" } },
+        { "name": "Get section content", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules/{{moduleId}}/sections/{{sectionId}}/content" } },
         { "name": "Get video metadata", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules/{{moduleId}}/sections/{{sectionId}}/video-metadata" } }
       ]
     },

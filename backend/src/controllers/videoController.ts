@@ -1,13 +1,13 @@
-import { Request, Response } from 'express';
-import { z } from 'zod';
-import multer from 'multer';
+import { Request, Response } from 'express'
+import { z } from 'zod'
+import multer from 'multer'
 import {
   createVideoMetadataSchema,
   updateVideoMetadataSchema,
   videoMetadataQuerySchema,
   videoMetadataIdSchema,
   videoMetadataSectionIdSchema,
-} from '../validators/videoValidators';
+} from '../validators/videoValidators'
 import {
   findAllVideoMetadata,
   findVideoMetadataById,
@@ -15,17 +15,19 @@ import {
   createVideoMetadata,
   updateVideoMetadataBySectionId,
   deleteVideoMetadataBySectionId,
-} from '../models/videoMetadata';
-import { extractVideoMetadata } from '../utils/videoProcessor';
-import { getVideoFilePath } from '../utils/storage';
+} from '../models/videoMetadata'
+import { extractVideoMetadata } from '../utils/videoProcessor'
+import { getVideoFilePath } from '../utils/storage'
 
 function isZodError(error: unknown): error is z.ZodError {
-  return error instanceof z.ZodError;
+  return error instanceof z.ZodError
 }
 
 function zodErrorDetails(error: z.ZodError): unknown {
-  return (error as z.ZodError & { issues?: unknown }).issues ??
-    (error as z.ZodError & { errors?: unknown }).errors;
+  return (
+    (error as z.ZodError & { issues?: unknown }).issues ??
+    (error as z.ZodError & { errors?: unknown }).errors
+  )
 }
 
 function isPrismaNotFound(error: unknown): boolean {
@@ -33,24 +35,27 @@ function isPrismaNotFound(error: unknown): boolean {
     typeof error === 'object' &&
     error !== null &&
     (error as { code?: string }).code === 'P2025'
-  );
+  )
 }
 
 /**
  * Get a paginated list of video metadata
  */
-export async function getVideoMetadata(req: Request, res: Response): Promise<void> {
+export async function getVideoMetadata(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
-    const query = videoMetadataQuerySchema.parse(req.query);
-    const result = await findAllVideoMetadata(query);
-    res.json(result);
+    const query = videoMetadataQuerySchema.parse(req.query)
+    const result = await findAllVideoMetadata(query)
+    res.json(result)
   } catch (error) {
-    console.error('Validation error in getVideoMetadata:', error);
+    console.error('Validation error in getVideoMetadata:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -58,24 +63,27 @@ export async function getVideoMetadata(req: Request, res: Response): Promise<voi
 /**
  * Get a single video metadata by id
  */
-export async function getVideoMetadataById(req: Request, res: Response): Promise<void> {
+export async function getVideoMetadataById(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
-    const params = videoMetadataIdSchema.parse(req.params);
-    const videoMetadata = await findVideoMetadataById(params.id);
-    
+    const params = videoMetadataIdSchema.parse(req.params)
+    const videoMetadata = await findVideoMetadataById(params.id)
+
     if (!videoMetadata) {
-      res.status(404).json({ error: 'Video metadata not found' });
-      return;
+      res.status(404).json({ error: 'Video metadata not found' })
+      return
     }
-    
-    res.json(videoMetadata);
+
+    res.json(videoMetadata)
   } catch (error) {
-    console.error('Validation error in getVideoMetadataById:', error);
+    console.error('Validation error in getVideoMetadataById:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -83,24 +91,29 @@ export async function getVideoMetadataById(req: Request, res: Response): Promise
 /**
  * Get video metadata by section id
  */
-export async function getVideoMetadataBySectionId(req: Request, res: Response): Promise<void> {
+export async function getVideoMetadataBySectionId(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
-    const params = videoMetadataSectionIdSchema.parse(req.params);
-    const videoMetadata = await findVideoMetadataBySectionId(params.sectionId);
-    
+    const params = videoMetadataSectionIdSchema.parse(req.params)
+    const videoMetadata = await findVideoMetadataBySectionId(params.sectionId)
+
     if (!videoMetadata) {
-      res.status(404).json({ error: 'Video metadata not found for this section' });
-      return;
+      res
+        .status(404)
+        .json({ error: 'Video metadata not found for this section' })
+      return
     }
-    
-    res.json(videoMetadata);
+
+    res.json(videoMetadata)
   } catch (error) {
-    console.error('Validation error in getVideoMetadataBySectionId:', error);
+    console.error('Validation error in getVideoMetadataBySectionId:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -113,16 +126,20 @@ export async function createVideoMetadataController(
   res: Response
 ): Promise<void> {
   try {
-    const parsedBody = createVideoMetadataSchema.parse(req.body);
-    const videoMetadata = await createVideoMetadata(parsedBody);
-    res.status(201).json(videoMetadata);
+    const sectionIdParams = videoMetadataSectionIdSchema.parse(req.params)
+    const parsedBody = createVideoMetadataSchema.parse({
+      ...req.body,
+      sectionId: sectionIdParams.sectionId,
+    })
+    const videoMetadata = await createVideoMetadata(parsedBody)
+    res.status(201).json(videoMetadata)
   } catch (error) {
-    console.error('Validation error in createVideoMetadataController:', error);
+    console.error('Validation error in createVideoMetadataController:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -135,20 +152,23 @@ export async function updateVideoMetadataController(
   res: Response
 ): Promise<void> {
   try {
-    const params = videoMetadataSectionIdSchema.parse(req.params);
-    const parsedBody = updateVideoMetadataSchema.parse(req.body);
-    
-    const videoMetadata = await updateVideoMetadataBySectionId(params.sectionId, parsedBody);
-    res.json(videoMetadata);
+    const params = videoMetadataSectionIdSchema.parse(req.params)
+    const parsedBody = updateVideoMetadataSchema.parse(req.body)
+
+    const videoMetadata = await updateVideoMetadataBySectionId(
+      params.sectionId,
+      parsedBody
+    )
+    res.json(videoMetadata)
   } catch (error) {
-    console.error('Validation error in updateVideoMetadataController:', error);
+    console.error('Validation error in updateVideoMetadataController:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else if (isPrismaNotFound(error)) {
-      res.status(404).json({ error: 'Video metadata not found' });
+      res.status(404).json({ error: 'Video metadata not found' })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -161,18 +181,18 @@ export async function deleteVideoMetadataController(
   res: Response
 ): Promise<void> {
   try {
-    const params = videoMetadataSectionIdSchema.parse(req.params);
-    await deleteVideoMetadataBySectionId(params.sectionId);
-    res.status(204).send();
+    const params = videoMetadataSectionIdSchema.parse(req.params)
+    await deleteVideoMetadataBySectionId(params.sectionId)
+    res.status(204).send()
   } catch (error) {
-    console.error('Validation error in deleteVideoMetadataController:', error);
+    console.error('Validation error in deleteVideoMetadataController:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else if (isPrismaNotFound(error)) {
-      res.status(404).json({ error: 'Video metadata not found' });
+      res.status(404).json({ error: 'Video metadata not found' })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -187,17 +207,21 @@ export async function uploadVideoController(
   try {
     // The file is available at req.file (from multer middleware)
     if (!req.file) {
-      res.status(400).json({ error: 'No video file uploaded' });
-      return;
+      res.status(400).json({ error: 'No video file uploaded' })
+      return
     }
 
     // Extract section ID from route parameters
-    const sectionIdParams = videoMetadataSectionIdSchema.parse(req.params);
-    const sectionId = sectionIdParams.sectionId;
+    const sectionIdParams = videoMetadataSectionIdSchema.parse(req.params)
+    const sectionId = sectionIdParams.sectionId
 
     // Extract video metadata (duration, file size) using the uploaded file
-    const filePath = getVideoFilePath(Array.isArray(req.file.filename) ? req.file.filename[0] : req.file.filename);
-    const { duration, size: fileSize } = await extractVideoMetadata(filePath);
+    const filePath = getVideoFilePath(
+      Array.isArray(req.file.filename)
+        ? req.file.filename[0]
+        : req.file.filename
+    )
+    const { duration, size: fileSize } = await extractVideoMetadata(filePath)
 
     // Create video metadata record
     const videoMetadata = await createVideoMetadata({
@@ -212,27 +236,29 @@ export async function uploadVideoController(
       tags: [], // Empty array as default
       fileSize, // Extracted file size
       durationSeconds: duration, // Extracted duration
-      filename: Array.isArray(req.file.filename) ? req.file.filename[0] : req.file.filename, // Original filename from upload
-    });
+      filename: Array.isArray(req.file.filename)
+        ? req.file.filename[0]
+        : req.file.filename, // Original filename from upload
+    })
 
     res.status(201).json({
       message: 'Video uploaded successfully',
-      videoMetadata
-    });
+      videoMetadata,
+    })
   } catch (error) {
-    console.error('Error in uploadVideoController:', error);
+    console.error('Error in uploadVideoController:', error)
     // Handle multer errors
     if (error instanceof multer.MulterError) {
       if (error.code === 'LIMIT_FILE_SIZE') {
-        res.status(400).json({ error: 'File size exceeds the limit' });
+        res.status(400).json({ error: 'File size exceeds the limit' })
       } else {
-        res.status(400).json({ error: `Multer error: ${error.message}` });
+        res.status(400).json({ error: `Multer error: ${error.message}` })
       }
     } else if (error instanceof z.ZodError) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }

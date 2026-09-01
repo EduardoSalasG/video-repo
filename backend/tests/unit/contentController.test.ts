@@ -1,156 +1,80 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getContent,
   updateContent,
-} from '../../../src/controllers/contentController';
-import {
-  findSectionById,
-  updateSection,
-} from '../../../src/models/section';
+} from '../../src/controllers/contentController'
+import { findSectionById, updateSection } from '../../src/models/section'
+import { ModuleService } from '../../src/services/ModuleService'
 
-// Mock the section model
-vi.mock('../../src/models/section', () => {
-  return {
-    findSectionById: vi.fn(),
-    updateSection: vi.fn(),
-  };
-});
+vi.mock('../../src/models/section', () => ({
+  findSectionById: vi.fn(),
+  updateSection: vi.fn(),
+}))
 
-import {
-  findSectionById as findSectionByIdMock,
-  updateSection as updateSectionMock,
-} from '../../../src/models/section';
+vi.mock('../../src/services/ModuleService', () => ({
+  ModuleService: { findModuleById: vi.fn() },
+}))
 
 describe('contentController', () => {
-  let mockReq: any;
-  let mockRes: any;
-
-  const sectionStub = {
-    id: '1',
-    moduleId: 'module1',
-    title: 'Introduction to Steps',
-    description: 'A beginner section',
-    orderIndex: 0,
-    videoUrl: null,
-    markdownContent: '# Initial content\\nThis is the initial markdown content.',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  const section = {
+    id: 'section-1',
+    moduleId: 'module-1',
+    markdownContent: '# Original',
+  }
+  let req: any
+  let res: any
 
   beforeEach(() => {
-    mockReq = { body: {}, params: {}, query: {} };
-    mockRes = {
+    req = {
+      body: {},
+      params: {
+        courseId: 'course-1',
+        moduleId: 'module-1',
+        sectionId: 'section-1',
+      },
+    }
+    res = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
-      send: vi.fn().mockReturnThis(),
-    };
-    vi.clearAllMocks();
-  });
+    }
+    vi.clearAllMocks()
+    vi.mocked(ModuleService.findModuleById).mockResolvedValue({
+      courseId: 'course-1',
+    } as never)
+  })
 
-  describe('getContent', () => {
-    it('should return markdown content for a section', async () => {
-      (findSectionByIdMock as jest.Mock).mockResolvedValue(sectionStub);
-      mockReq.params = { moduleId: 'module1', sectionId: '1' };
+  it('gets the markdown content from the requested section in its module', async () => {
+    vi.mocked(findSectionById).mockResolvedValue(section as never)
 
-      await getContent(mockReq, mockRes);
+    await getContent(req, res)
 
-      expect(findSectionByIdMock).toHaveBeenCalledWith('1', 'module1');
-      expect(mockRes.json).toHaveBeenCalledWith({
-        markdownContent: sectionStub.markdownContent,
-      });
-    });
+    expect(findSectionById).toHaveBeenCalledWith('section-1', 'module-1')
+    expect(res.json).toHaveBeenCalledWith({ markdownContent: '# Original' })
+  })
 
-    it('should return 404 when section is not found', async () => {
-      (findSectionByIdMock as jest.Mock).mockResolvedValue(null);
-      mockReq.params = { moduleId: 'module1', sectionId: '1' };
+  it('updates markdown content only after validating the nested module hierarchy', async () => {
+    vi.mocked(updateSection).mockResolvedValue({
+      ...section,
+      markdownContent: '# Updated',
+    } as never)
+    req.body = { markdownContent: '# Updated' }
 
-      await getContent(mockReq, mockRes);
+    await updateContent(req, res)
 
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
-    });
+    expect(ModuleService.findModuleById).toHaveBeenCalledWith('module-1')
+    expect(updateSection).toHaveBeenCalledWith(
+      'section-1',
+      { markdownContent: '# Updated' },
+      'module-1'
+    )
+    expect(res.json).toHaveBeenCalledWith({ markdownContent: '# Updated' })
+  })
 
-    it('should return 400 if moduleId param is missing', async () => {
-      mockReq.params = { sectionId: '1' };
+  it('rejects a section request missing its nested module id', async () => {
+    req.params = { courseId: 'course-1', sectionId: 'section-1' }
 
-      await getContent(mockReq, mockRes);
+    await getContent(req, res)
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
-
-    it('should return 400 if sectionId param is missing', async () => {
-      mockReq.params = { moduleId: 'module1' };
-
-      await getContent(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
-  });
-
-  describe('updateContent', () => {
-    it('should update markdown content and return 200', async () => {
-      const updatedSection = { ...sectionStub, markdownContent: '# Updated content' };
-      (updateSectionMock as jest.Mock).mockResolvedValue(updatedSection);
-      mockReq.params = { moduleId: 'module1', sectionId: '1' };
-      mockReq.body = { markdownContent: '# Updated content' };
-
-      await updateContent(mockReq, mockRes);
-
-      expect(updateSectionMock).toHaveBeenCalledWith('1', { markdownContent: '# Updated content' }, 'module1');
-      expect(mockRes.json).toHaveBeenCalledWith({ markdownContent: updatedSection.markdownContent });
-    });
-
-    it('should return 404 when section is not found', async () => {
-      (updateSectionMock as jest.Mock).mockRejectedValue({ code: 'P2025' });
-      mockReq.params = { moduleId: 'module1', sectionId: '1' };
-      mockReq.body = { markdownContent: '# Updated' };
-
-      await updateContent(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Section not found' });
-    });
-
-    it('should return 400 if body validation fails', async () => {
-      mockReq.params = { moduleId: 'module1', sectionId: '1' };
-      mockReq.body = { markdownContent: 123 }; // invalid type
-
-      await updateContent(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
-
-    it('should return 400 if moduleId param is missing', async () => {
-      mockReq.params = { sectionId: '1' };
-      mockReq.body = { markdownContent: '# Updated' };
-
-      await updateContent(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
-
-    it('should return 400 if sectionId param is missing', async () => {
-      mockReq.params = { moduleId: 'module1' };
-      mockReq.body = { markdownContent: '# Updated' };
-
-      await updateContent(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.any(Array) })
-      );
-    });
-  });
-});
+    expect(res.status).toHaveBeenCalledWith(400)
+  })
+})

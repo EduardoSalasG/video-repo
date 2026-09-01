@@ -29,11 +29,10 @@ app.use(cookieParser()); // parse cookies
 app.get('/', (req: Request, res: Response) => {
   res.send('Dance Education Platform API');
 });
-
 app.use('/auth', authRoutes);
 app.use('/courses/:courseId/modules', moduleRoutes);
 app.use('/courses/:courseId/modules/:moduleId/sections', sectionRoutes);
-app.use('/courses/:courseId/modules/:moduleId/sections/:sectionId/video', videoRoutes);
+app.use('/courses/:courseId/modules/:moduleId/sections/:sectionId', videoRoutes);
 app.use('/courses/:courseId/modules/:moduleId/sections/:sectionId/content', contentRoutes);
 app.use('/', searchRoutes);
 app.use('/', progressRoutes);

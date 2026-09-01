@@ -1,29 +1,49 @@
-
-import { Router } from 'express';
-import { authenticateUser } from '../middleware/auth';
-import { authorizePolicy } from '../middleware/authorizePolicy';
+import { Router } from 'express'
+import { authenticateUser } from '../middleware/auth'
+import { authorizePolicy } from '../middleware/authorizePolicy'
+import { uploadVideo } from '../utils/storage'
 import {
-  getVideos,
-  getVideoById,
-  createVideoController,
-  updateVideoController,
-  deleteVideoController,
-} from '../controllers/videoController';
+  getVideoMetadataBySectionId,
+  createVideoMetadataController,
+  updateVideoMetadataController,
+  deleteVideoMetadataController,
+  uploadVideoController,
+} from '../controllers/videoController'
 
-const router = Router({ mergeParams: true });
+const router = Router({ mergeParams: true })
 
-// All authenticated users can read videos in sections they have access to
-router.get('/', authenticateUser, authorizePolicy('videoMetadata:read'), getVideos);
-router.get('/:videoId', authenticateUser, authorizePolicy('videoMetadata:read'), getVideoById);
+// Video metadata is a singleton nested below its parent section. Policies must
+// therefore authorize the section, including before the metadata exists.
+router.get(
+  '/video-metadata',
+  authenticateUser,
+  authorizePolicy('section:read'),
+  getVideoMetadataBySectionId
+)
+router.post(
+  '/video-metadata',
+  authenticateUser,
+  authorizePolicy('section:update'),
+  createVideoMetadataController
+)
+router.patch(
+  '/video-metadata',
+  authenticateUser,
+  authorizePolicy('section:update'),
+  updateVideoMetadataController
+)
+router.delete(
+  '/video-metadata',
+  authenticateUser,
+  authorizePolicy('section:delete'),
+  deleteVideoMetadataController
+)
+router.post(
+  '/upload-video',
+  authenticateUser,
+  authorizePolicy('section:update'),
+  uploadVideo.single('video'),
+  uploadVideoController
+)
 
-// Users with WRITE access to course can create videos
-router.post('/', authenticateUser, authorizePolicy('videoMetadata:create'), createVideoController);
-
-// Users with WRITE access to course can update videos
-router.patch('/:videoId', authenticateUser, authorizePolicy('videoMetadata:update'), updateVideoController);
-
-// Users with MAINTAIN access to course can delete videos (logic delete)
-router.delete('/:videoId', authenticateUser, authorizePolicy('videoMetadata:delete'), deleteVideoController);
-
-export default router;
-
+export default router
