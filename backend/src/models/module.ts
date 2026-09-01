@@ -28,6 +28,7 @@ export interface CreateModuleInput {
   title: string
   description?: string
   orderIndex?: number
+  courseId: string
 }
 
 export interface UpdateModuleInput {
@@ -111,6 +112,7 @@ export async function createModule(data: CreateModuleInput) {
       title: data.title,
       description: data.description,
       orderIndex: data.orderIndex ?? 0,
+      courseId: data.courseId,
     },
   })
 }

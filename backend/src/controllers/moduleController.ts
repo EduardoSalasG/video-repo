@@ -1,21 +1,33 @@
-import { Request, Response } from 'express';
-import { z } from 'zod';
+import { Request, Response } from 'express'
+import { z } from 'zod'
+import prisma from '../config/database'
 import {
   createModuleSchema,
   updateModuleSchema,
   moduleQuerySchema,
   courseIdSchema,
   courseModuleIdsSchema,
-} from '../validators/moduleValidators';
-import { ModuleService } from '../services/ModuleService';
+} from '../validators/moduleValidators'
+
+type AuthenticatedUser = {
+  id: string
+  role: 'ADMIN' | 'INSTRUCTOR' | 'STUDENT'
+}
+
+function getAuthenticatedUser(req: Request): AuthenticatedUser | undefined {
+  return (req as Request & { user?: AuthenticatedUser }).user
+}
+import { ModuleService } from '../services/ModuleService'
 
 function isZodError(error: unknown): error is z.ZodError {
-  return error instanceof z.ZodError;
+  return error instanceof z.ZodError
 }
 
 function zodErrorDetails(error: z.ZodError): unknown {
-  return (error as z.ZodError & { issues?: unknown }).issues ??
-    (error as z.ZodError & { errors?: unknown }).errors;
+  return (
+    (error as z.ZodError & { issues?: unknown }).issues ??
+    (error as z.ZodError & { errors?: unknown }).errors
+  )
 }
 
 function isPrismaNotFound(error: unknown): boolean {
@@ -23,7 +35,7 @@ function isPrismaNotFound(error: unknown): boolean {
     typeof error === 'object' &&
     error !== null &&
     (error as { code?: string }).code === 'P2025'
-  );
+  )
 }
 
 /**
@@ -31,20 +43,41 @@ function isPrismaNotFound(error: unknown): boolean {
  */
 export async function getModules(req: Request, res: Response): Promise<void> {
   try {
-    const courseIdParams = courseIdSchema.parse(req.params); // Validate courseId
-    const query = moduleQuerySchema.parse(req.query);
+    const user = getAuthenticatedUser(req)
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' })
+      return
+    }
+
+    const courseIdParams = courseIdSchema.parse(req.params) // Validate courseId
+    const query = moduleQuerySchema.parse(req.query)
+
+    // Check if user has access to this course
+    const courseAccess = await prisma.courseUserAccess.findFirst({
+      where: {
+        userId: user.id,
+        courseId: courseIdParams.courseId,
+      },
+    })
+
+    // Admins have access to all courses
+    if (user.role !== 'ADMIN' && !courseAccess) {
+      res.status(403).json({ error: 'Forbidden: Insufficient permissions' })
+      return
+    }
+
     const result = await ModuleService.findAllModules({
       ...query,
       courseId: courseIdParams.courseId,
-    });
-    res.json(result);
+    })
+    res.json(result)
   } catch (error) {
-    console.error('Validation error in getModules:', error);
+    console.error('Validation error in getModules:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -52,28 +85,33 @@ export async function getModules(req: Request, res: Response): Promise<void> {
 /**
  * Get a single module by id (includes its sections)
  */
-export async function getModuleById(req: Request, res: Response): Promise<void> {
+export async function getModuleById(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
-    const params = courseModuleIdsSchema.parse(req.params); // Validate both courseId and moduleId
-    const module = await ModuleService.findModuleById(params.moduleId);
-    
+    const params = courseModuleIdsSchema.parse(req.params) // Validate both courseId and moduleId
+    const module = await ModuleService.findModuleById(params.moduleId)
+
     // Additional validation: ensure module belongs to course
     if (module && module.courseId !== params.courseId) {
-      return res.status(404).json({ error: 'Module not found in course' });
+      res.status(404).json({ error: 'Module not found in course' })
+      return
     }
-    
+
     if (!module) {
-      return res.status(404).json({ error: 'Module not found' });
+      res.status(404).json({ error: 'Module not found' })
+      return
     }
-    
-    res.json(module);
+
+    res.json(module)
   } catch (error) {
-    console.error('Validation error in getModuleById:', error);
+    console.error('Validation error in getModuleById:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -86,24 +124,24 @@ export async function createModuleController(
   res: Response
 ): Promise<void> {
   try {
-    const courseIdParams = courseIdSchema.parse(req.params); // Validate courseId
-    const parsedBody = createModuleSchema.parse(req.body);
+    const courseIdParams = courseIdSchema.parse(req.params) // Validate courseId
+    const parsedBody = createModuleSchema.parse(req.body)
     const module = await ModuleService.createModule({
       ...parsedBody,
       courseId: courseIdParams.courseId,
-    });
-    res.status(201).json(module);
+    })
+    res.status(201).json(module)
   } catch (error) {
-    console.error('Validation error in createModuleController:', error);
+    console.error('Validation error in createModuleController:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
-} else if (error instanceof Error && error.message === 'Course not found') {
-      res.status(404).json({ error: 'Course not found' });
+      res.status(400).json({ error: zodErrorDetails(error) })
+    } else if (error instanceof Error && error.message === 'Course not found') {
+      res.status(404).json({ error: 'Course not found' })
     } else if (isPrismaNotFound(error)) {
-      res.status(404).json({ error: 'Module not found' });
+      res.status(404).json({ error: 'Module not found' })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -116,25 +154,25 @@ export async function updateModuleController(
   res: Response
 ): Promise<void> {
   try {
-    const params = courseModuleIdsSchema.parse(req.params); // Validate both courseId and moduleId
-    const parsedBody = updateModuleSchema.parse(req.body);
-    
+    const params = courseModuleIdsSchema.parse(req.params) // Validate both courseId and moduleId
+    const parsedBody = updateModuleSchema.parse(req.body)
+
     const module = await ModuleService.updateModule(params.moduleId, {
       ...parsedBody,
       courseId: params.courseId, // This will validate course exists
-    });
-    res.status(200).json(module);
+    })
+    res.status(200).json(module)
   } catch (error) {
-    console.error('Validation error in updateModuleController:', error);
+    console.error('Validation error in updateModuleController:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else if (error instanceof Error && error.message === 'Course not found') {
-      res.status(404).json({ error: 'Course not found' });
+      res.status(404).json({ error: 'Course not found' })
     } else if (isPrismaNotFound(error)) {
-      res.status(404).json({ error: 'Module not found' });
+      res.status(404).json({ error: 'Module not found' })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }
@@ -147,18 +185,18 @@ export async function deleteModuleController(
   res: Response
 ): Promise<void> {
   try {
-    const params = courseModuleIdsSchema.parse(req.params); // Validate both courseId and moduleId
-    await ModuleService.deleteModule(params.moduleId);
-    res.status(204).send();
+    const params = courseModuleIdsSchema.parse(req.params) // Validate both courseId and moduleId
+    await ModuleService.deleteModule(params.moduleId)
+    res.status(204).send()
   } catch (error) {
-    console.error('Validation error in deleteModuleController:', error);
+    console.error('Validation error in deleteModuleController:', error)
     if (isZodError(error)) {
-      res.status(400).json({ error: zodErrorDetails(error) });
+      res.status(400).json({ error: zodErrorDetails(error) })
     } else if (isPrismaNotFound(error)) {
-      res.status(404).json({ error: 'Module not found' });
+      res.status(404).json({ error: 'Module not found' })
     } else {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error(error)
+      res.status(500).json({ error: 'Internal server error' })
     }
   }
 }

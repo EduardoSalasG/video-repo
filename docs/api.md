@@ -27,6 +27,8 @@ Las escrituras de curso/módulo/sección/vídeo/contenido están protegidas por 
 
 ## Compatibilidad y mantenimiento
 
-`/modules` conserva endpoints de compatibilidad para navegación de módulos por usuario. No es la jerarquía de contenido principal. Cualquier modificación de rutas, validadores, forma de respuesta, autorización o parámetros debe actualizar este archivo, los clientes afectados, pruebas y la colección Postman en el mismo cambio.
+`/modules` conserva los endpoints de compatibilidad `GET /modules` y `GET /modules/:moduleId` para navegación de módulos por usuario. No es la jerarquía de contenido principal. Un administrador puede consultarlos sin una fila explícita de acceso; los demás usuarios requieren acceso al curso del módulo.
+
+Los endpoints de acceso por curso (`GET/POST /courses/:courseId/access` y `DELETE /courses/:courseId/access/:userId`) requieren respectivamente `READ` y `MAINTAIN`. Un usuario con `MAINTAIN` puede conceder, actualizar o revocar acceso; `READ` y `WRITE` reciben `403` para esas escrituras. Cualquier modificación de rutas, validadores, forma de respuesta, autorización o parámetros debe actualizar este archivo, los clientes afectados, pruebas y la colección Postman en el mismo cambio.
 
 Las especificaciones bajo `docs/superpowers/` son históricas y pueden describir contratos anteriores.

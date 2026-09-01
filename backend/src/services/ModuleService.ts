@@ -1,11 +1,17 @@
+import prisma from '../config/database'
+import { CourseService } from './CourseService'
 
-import prisma from '../config/database';
-import { CourseService } from './CourseService';
+interface ModuleListParams {
+  page?: number
+  limit?: number
+  search?: string
+  courseId?: string
+}
 
 export class ModuleService {
-  static async findAllModules(params: any = {}) {
-    const { page = 1, limit = 10, search, courseId } = params;
-    
+  static async findAllModules(params: ModuleListParams = {}) {
+    const { page = 1, limit = 10, search, courseId } = params
+
     const where = {
       isDeleted: false,
       ...(courseId && { courseId }),
@@ -19,7 +25,7 @@ export class ModuleService {
             ],
           }
         : {}),
-    };
+    }
 
     const [modules, total] = await Promise.all([
       prisma.module.findMany({
@@ -27,10 +33,13 @@ export class ModuleService {
         orderBy: { orderIndex: 'asc' },
         skip: (page - 1) * limit,
         take: limit,
-        include: { _count: { select: { sections: true } } },
+        include: {
+          _count: { select: { sections: true } },
+          course: { select: { id: true, name: true } },
+        },
       }),
       prisma.module.count({ where }),
-    ]);
+    ])
 
     return {
       modules: modules.map((module) => ({
@@ -39,6 +48,9 @@ export class ModuleService {
         description: module.description,
         orderIndex: module.orderIndex,
         sectionCount: module._count.sections,
+        course: module.course
+          ? { id: module.course.id, name: module.course.name }
+          : null,
         createdAt: module.createdAt,
         updatedAt: module.updatedAt,
       })),
@@ -48,7 +60,7 @@ export class ModuleService {
         total,
         pages: Math.ceil(total / limit),
       },
-    };
+    }
   }
 
   static async findModuleById(id: string) {
@@ -70,16 +82,21 @@ export class ModuleService {
           },
         },
       },
-    });
+    })
   }
 
-  static async createModule(data: { title: string; description?: string; orderIndex?: number; courseId: string }) {
+  static async createModule(data: {
+    title: string
+    description?: string
+    orderIndex?: number
+    courseId: string
+  }) {
     // Validate course exists
-    const course = await CourseService.findCourseById(data.courseId);
+    const course = await CourseService.findCourseById(data.courseId)
     if (!course) {
-      throw new Error('Course not found');
+      throw new Error('Course not found')
     }
-    
+
     return prisma.module.create({
       data: {
         title: data.title,
@@ -87,18 +104,26 @@ export class ModuleService {
         orderIndex: data.orderIndex ?? 0,
         courseId: data.courseId,
       },
-    });
+    })
   }
 
-  static async updateModule(id: string, data: { title?: string; description?: string | null; orderIndex?: number; courseId?: string }) {
+  static async updateModule(
+    id: string,
+    data: {
+      title?: string
+      description?: string | null
+      orderIndex?: number
+      courseId?: string
+    }
+  ) {
     // If courseId is being updated, validate it exists
     if (data.courseId) {
-      const course = await CourseService.findCourseById(data.courseId);
+      const course = await CourseService.findCourseById(data.courseId)
       if (!course) {
-        throw new Error('Course not found');
+        throw new Error('Course not found')
       }
     }
-    
+
     return prisma.module.update({
       where: { id: id, isDeleted: false },
       data: {
@@ -107,7 +132,7 @@ export class ModuleService {
         orderIndex: data.orderIndex,
         courseId: data.courseId,
       },
-    });
+    })
   }
 
   static async deleteModule(id: string) {
@@ -115,9 +140,8 @@ export class ModuleService {
       where: { id: id, isDeleted: false },
       data: {
         isDeleted: true,
-        deletedAt: new Date()
-      }
-    });
+        deletedAt: new Date(),
+      },
+    })
   }
 }
-

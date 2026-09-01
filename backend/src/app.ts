@@ -11,6 +11,7 @@ import searchRoutes from './routes/searchRoutes';
 import progressRoutes from './routes/progressRoutes';
 import courseRoutes from './routes/courseRoutes';
 import accessRoutes from './routes/accessRoutes';
+import userModuleRoutes from './routes/userModuleRoutes';
 
 const app = express();
 
@@ -38,6 +39,6 @@ app.use('/', searchRoutes);
 app.use('/', progressRoutes);
 app.use('/courses', courseRoutes);
 app.use('/courses', accessRoutes);
+app.use('/modules', userModuleRoutes);
 
 export default app;
-

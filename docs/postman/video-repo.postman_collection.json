@@ -9,7 +9,8 @@
     { "key": "accessToken", "value": "" },
     { "key": "courseId", "value": "" },
     { "key": "moduleId", "value": "" },
-    { "key": "sectionId", "value": "" }
+    { "key": "sectionId", "value": "" },
+    { "key": "userId", "value": "" }
   ],
   "item": [
     {
@@ -41,9 +42,19 @@
       "name": "Curriculum",
       "item": [
         { "name": "List courses", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses" } },
+        { "name": "List accessible modules (compatibility)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/modules" } },
+        { "name": "Get accessible module (compatibility)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/modules/{{moduleId}}" } },
         { "name": "List modules in course", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules" } },
         { "name": "List sections in module", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules/{{moduleId}}/sections" } },
         { "name": "Get video metadata", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/modules/{{moduleId}}/sections/{{sectionId}}/video-metadata" } }
+      ]
+    },
+    {
+      "name": "Course access",
+      "item": [
+        { "name": "List course users", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/access" } },
+        { "name": "Grant course access", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"accessLevel\": \"READ\"\n}" }, "url": "{{baseUrl}}/courses/{{courseId}}/access" } },
+        { "name": "Revoke course access", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/courses/{{courseId}}/access/{{userId}}" } }
       ]
     },
     {
