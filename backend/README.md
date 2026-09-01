@@ -19,6 +19,6 @@ La base local se inicia con `npm run db:start` y se expone en `localhost:5433`. 
 
 ## Estado operativo
 
-Hay un Dockerfile para el backend. Todavía no hay Compose, el backend no aplica migraciones automáticamente al iniciar y el seed no es idempotente para cursos. Las correcciones y los comandos portables están priorizados en el [roadmap de ingeniería](../docs/roadmaps/engineering.md).
+Hay un Dockerfile para el backend. Todavía no hay Compose ni el backend aplica migraciones automáticamente al iniciar. El seed de usuarios, cursos y accesos es idempotente en ejecuciones secuenciales. Las correcciones y los comandos portables restantes están priorizados en el [roadmap de ingeniería](../docs/roadmaps/engineering.md).
 
 Las reglas específicas están en [AGENTS.md](AGENTS.md).
