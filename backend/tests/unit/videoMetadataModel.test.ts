@@ -57,14 +57,14 @@ describe('videoMetadata model', () => {
 
       expect(prisma.videoMetadata.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {},
+          where: { isDeleted: false },
           orderBy: { createdAt: 'desc' },
           skip: 0,
           take: 10,
         })
       );
       expect(prisma.videoMetadata.count).toHaveBeenCalledWith({
-        where: {},
+        where: { isDeleted: false },
       });
       expect(result.videoMetadata).toHaveLength(1);
       expect(result.videoMetadata[0].id).toBe('vm1');
@@ -80,6 +80,7 @@ describe('videoMetadata model', () => {
       expect(prisma.videoMetadata.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
+            isDeleted: false,
             OR: [
               { sectionId: { contains: 's1', mode: 'insensitive' } },
             ],
@@ -91,6 +92,7 @@ describe('videoMetadata model', () => {
       );
       expect(prisma.videoMetadata.count).toHaveBeenCalledWith({
         where: {
+          isDeleted: false,
           OR: [
             { sectionId: { contains: 's1', mode: 'insensitive' } },
           ],
@@ -105,10 +107,10 @@ describe('videoMetadata model', () => {
       await findAllVideoMetadata();
 
       expect(prisma.videoMetadata.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 0, take: 10, where: {} })
+        expect.objectContaining({ skip: 0, take: 10, where: { isDeleted: false } })
       );
       expect(prisma.videoMetadata.count).toHaveBeenCalledWith({
-        where: {},
+        where: { isDeleted: false },
       });
     });
   });
@@ -120,7 +122,7 @@ describe('videoMetadata model', () => {
       const result = await findVideoMetadataById('vm1');
 
       expect(prisma.videoMetadata.findUnique).toHaveBeenCalledWith({
-        where: { id: 'vm1' },
+        where: { id: 'vm1', isDeleted: false },
       });
       expect(result).toBe(videoMetadataStub);
     });
@@ -131,7 +133,7 @@ describe('videoMetadata model', () => {
       const result = await findVideoMetadataById('nonexistent');
 
       expect(prisma.videoMetadata.findUnique).toHaveBeenCalledWith({
-        where: { id: 'nonexistent' },
+        where: { id: 'nonexistent', isDeleted: false },
       });
       expect(result).toBeNull();
     });
@@ -144,7 +146,7 @@ describe('videoMetadata model', () => {
       const result = await findVideoMetadataBySectionId('s1');
 
       expect(prisma.videoMetadata.findUnique).toHaveBeenCalledWith({
-        where: { sectionId: 's1' },
+        where: { sectionId: 's1', isDeleted: false },
       });
       expect(result).toBe(videoMetadataStub);
     });
@@ -155,7 +157,7 @@ describe('videoMetadata model', () => {
       const result = await findVideoMetadataBySectionId('nonexistent');
 
       expect(prisma.videoMetadata.findUnique).toHaveBeenCalledWith({
-        where: { sectionId: 'nonexistent' },
+        where: { sectionId: 'nonexistent', isDeleted: false },
       });
       expect(result).toBeNull();
     });
@@ -240,7 +242,7 @@ describe('videoMetadata model', () => {
 
       expect(prisma.videoMetadata.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { sectionId: 's1' },
+          where: { sectionId: 's1', isDeleted: false },
           data: {
             steps: undefined,
             difficulty: undefined,
@@ -261,11 +263,14 @@ describe('videoMetadata model', () => {
 
   describe('deleteVideoMetadataBySectionId', () => {
     it('should delete video metadata by section id', async () => {
-      (prisma.videoMetadata.delete as jest.Mock).mockResolvedValue(videoMetadataStub);
+      (prisma.videoMetadata.update as jest.Mock).mockResolvedValue(videoMetadataStub);
 
       const result = await deleteVideoMetadataBySectionId('s1');
 
-      expect(prisma.videoMetadata.delete).toHaveBeenCalledWith({ where: { sectionId: 's1' } });
+      expect(prisma.videoMetadata.update).toHaveBeenCalledWith({
+        where: { sectionId: 's1', isDeleted: false },
+        data: { isDeleted: true, deletedAt: expect.any(Date) },
+      });
       expect(result).toBe(videoMetadataStub);
     });
   });
