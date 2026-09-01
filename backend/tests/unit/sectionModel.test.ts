@@ -51,14 +51,14 @@ describe('section model', () => {
 
       expect(prisma.section.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { moduleId: 'module1' },
+          where: { moduleId: 'module1', isDeleted: false },
           orderBy: { orderIndex: 'asc' },
           skip: 0,
           take: 10,
         })
       );
       expect(prisma.section.count).toHaveBeenCalledWith({
-        where: { moduleId: 'module1' },
+        where: { moduleId: 'module1', isDeleted: false },
       });
       expect(result.sections).toHaveLength(1);
       expect(result.sections[0].id).toBe('1');
@@ -75,6 +75,7 @@ describe('section model', () => {
         expect.objectContaining({
           where: {
             moduleId: 'module1',
+            isDeleted: false,
             OR: [
               { title: { contains: 'steps', mode: 'insensitive' } },
               {
@@ -93,10 +94,10 @@ describe('section model', () => {
       await findAllSections('module1');
 
       expect(prisma.section.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 0, take: 10, where: { moduleId: 'module1' } })
+        expect.objectContaining({ skip: 0, take: 10, where: { moduleId: 'module1', isDeleted: false } })
       );
       expect(prisma.section.count).toHaveBeenCalledWith({
-        where: { moduleId: 'module1' },
+        where: { moduleId: 'module1', isDeleted: false },
       });
     });
   });
@@ -108,7 +109,7 @@ describe('findSectionById', () => {
        const result = await findSectionById('1', 'module1');
 
        expect(prisma.section.findUnique).toHaveBeenCalledWith({
-         where: { id: '1', moduleId: 'module1' },
+         where: { id: '1', moduleId: 'module1', isDeleted: false },
        });
        expect(result).toBe(sectionStub);
      });
@@ -172,7 +173,7 @@ describe('updateSection', () => {
 
        expect(prisma.section.update).toHaveBeenCalledWith(
          expect.objectContaining({
-           where: { id: '1', moduleId: 'module1' },
+           where: { id: '1', moduleId: 'module1', isDeleted: false },
            data: {
              title: 'Updated Section',
              description: null,
@@ -188,11 +189,14 @@ describe('updateSection', () => {
 
 describe('deleteSection', () => {
      it('should delete a section by id', async () => {
-       (prisma.section.delete as jest.Mock).mockResolvedValue(sectionStub);
+       (prisma.section.update as jest.Mock).mockResolvedValue(sectionStub);
 
        const result = await deleteSection('1', 'module1');
 
-       expect(prisma.section.delete).toHaveBeenCalledWith({ where: { id: '1', moduleId: 'module1' } });
+       expect(prisma.section.update).toHaveBeenCalledWith({
+         where: { id: '1', moduleId: 'module1', isDeleted: false },
+         data: { isDeleted: true, deletedAt: expect.any(Date) },
+       });
        expect(result).toBe(sectionStub);
      });
    });
