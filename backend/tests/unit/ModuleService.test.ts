@@ -67,11 +67,14 @@ describe('ModuleService', () => {
 
       expect(prisma.module.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { courseId: 'course-1' },
+          where: { courseId: 'course-1', isDeleted: false },
           orderBy: { orderIndex: 'asc' },
           skip: 0,
           take: 10,
-          include: { _count: { select: { sections: true } } },
+          include: {
+            _count: { select: { sections: true } },
+            course: { select: { id: true, name: true } },
+          },
         })
       );
       expect(result.modules).toHaveLength(1);
@@ -89,6 +92,7 @@ describe('ModuleService', () => {
         expect.objectContaining({
           where: {
             courseId: 'course-1',
+            isDeleted: false,
             OR: [
               { title: { contains: 'salsa', mode: 'insensitive' } },
               { description: { contains: 'salsa', mode: 'insensitive' } },
@@ -117,9 +121,10 @@ describe('ModuleService', () => {
       const result = await ModuleService.findModuleById('1');
 
       expect(prisma.module.findUnique).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: '1', isDeleted: false },
         include: {
           sections: {
+            where: { isDeleted: false },
             orderBy: { orderIndex: 'asc' },
             select: {
               id: true,
@@ -182,7 +187,7 @@ describe('ModuleService', () => {
       const result = await ModuleService.updateModule('1', { title: 'Updated Title' });
 
       expect(prisma.module.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: '1', isDeleted: false },
         data: { title: 'Updated Title', description: undefined, orderIndex: undefined, courseId: undefined },
       });
       expect(result).toBe(moduleStub);
@@ -202,11 +207,14 @@ describe('ModuleService', () => {
 
   describe('deleteModule', () => {
     it('should delete a module by id', async () => {
-      (prisma.module.delete as jest.Mock).mockResolvedValue(moduleStub);
+      (prisma.module.update as jest.Mock).mockResolvedValue(moduleStub);
 
       const result = await ModuleService.deleteModule('1');
 
-      expect(prisma.module.delete).toHaveBeenCalledWith({ where: { id: '1' } });
+      expect(prisma.module.update).toHaveBeenCalledWith({
+        where: { id: '1', isDeleted: false },
+        data: { isDeleted: true, deletedAt: expect.any(Date) },
+      });
       expect(result).toBe(moduleStub);
     });
   });
