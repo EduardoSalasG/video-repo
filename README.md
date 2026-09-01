@@ -6,8 +6,8 @@ Monorepo de una plataforma de educación de baile. Incluye una API Express/Prism
 
 - La navegación de contenido es `Curso → Módulo → Sección → vídeo/contenido`.
 - El frontend usa `/courses` como flujo principal y un proxy autenticado de Next hacia el backend.
-- El backend tiene Dockerfile, pero aún no Docker Compose ni bootstrap automático de migraciones/seed.
-- El seed de usuarios, cursos y accesos es idempotente en ejecuciones secuenciales; el bootstrap automático de migraciones y seed sigue priorizado en el [roadmap de ingeniería](docs/roadmaps/engineering.md).
+- El backend espera PostgreSQL, aplica migraciones Prisma pendientes y ejecuta el seed sólo si no hay usuarios ni cursos; aún no hay Docker Compose.
+- El seed de usuarios, cursos y accesos es idempotente en ejecuciones secuenciales; los límites de concurrencia y la validación en contenedor siguen priorizados en el [roadmap de ingeniería](docs/roadmaps/engineering.md).
 
 Arquitectura y riesgos actuales: [context/architecture/current-system.md](context/architecture/current-system.md). Contratos: [API](docs/api.md), [esquema](docs/schema.md) y [colección Postman](docs/postman/video-repo.postman_collection.json).
 

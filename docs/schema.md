@@ -31,4 +31,4 @@ Los enums son `Role` (`ADMIN`, `INSTRUCTOR`, `STUDENT`), `AccessLevel`, `Difficu
 
 ## Estado de migraciones y seed
 
-El repositorio debe evolucionar el esquema mediante migraciones Prisma versionadas. El seed reutiliza usuarios, cursos activos y accesos existentes en ejecuciones secuenciales; el bootstrap automático de migraciones y seed sigue pendiente en el [roadmap de ingeniería](roadmaps/engineering.md). No se debe tratar este documento como prueba de que el bootstrap automático ya existe.
+El repositorio evoluciona el esquema mediante migraciones Prisma versionadas. Antes de abrir HTTP, el backend espera PostgreSQL, ejecuta `prisma migrate deploy` y si no existen usuarios ni cursos usa el seed idempotente. La garantía ante ejecuciones concurrentes y la validación dentro de Compose siguen pendientes en el [roadmap de ingeniería](roadmaps/engineering.md).

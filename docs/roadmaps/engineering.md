@@ -15,8 +15,8 @@ _Prioridades técnicas para llevar el estado actual a una plataforma operable. N
 
 1. Adoptar migraciones Prisma versionadas como única vía de incremento de esquema. Sustituir `prisma db push` en CI y procedimientos compartidos por `prisma migrate deploy` (producción/CI) y `prisma migrate dev` (desarrollo).
 2. Hecho: el seed reutiliza cursos activos por nombre y usa `upsert` para usuarios y accesos, evitando duplicados en corridas secuenciales. Pendiente: separar datos de desarrollo de datos mínimos de bootstrap y decidir una garantía ante ejecuciones concurrentes.
-3. Definir y probar el bootstrap del backend: esperar la disponibilidad de PostgreSQL, inspeccionar el estado de migraciones, aplicar las pendientes y ejecutar seed **sólo** si la base está vacía. El proceso debe fallar con diagnóstico y código no cero ante migración/seed inválidos, no arrancar contra un esquema desconocido.
-4. Añadir pruebas de integración que ejecuten bootstrap dos veces y prueben: misma cardinalidad, mismas claves de negocio y conservación de datos existentes.
+3. Hecho en backend: antes de abrir HTTP espera PostgreSQL, ejecuta `prisma migrate deploy` y aplica seed sólo si no hay usuarios ni cursos. Pendiente: validar el flujo en la imagen/Compose y emitir métricas o diagnósticos operables adicionales.
+4. Pendiente: añadir integración que ejecute bootstrap dos veces y pruebe misma cardinalidad, mismas claves de negocio y conservación de datos existentes.
 
 **Salida:** una base nueva y una base ya inicializada terminan en el mismo estado de esquema/datos semilla, sin operaciones destructivas implícitas.
 

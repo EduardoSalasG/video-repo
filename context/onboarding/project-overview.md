@@ -25,4 +25,4 @@ npm run dev --workspace backend
 npm run dev --workspace frontend
 ```
 
-Los scripts `db:*` actuales usan `docker run`; Docker Compose y la inicialización automática de esquema/seed son trabajo pendiente del roadmap, no capacidades actuales.
+Los scripts `db:*` actuales usan `docker run`. Al iniciar, el backend espera PostgreSQL, aplica migraciones pendientes y ejecuta el seed sólo si no hay usuarios ni cursos. Docker Compose sigue pendiente en el roadmap.

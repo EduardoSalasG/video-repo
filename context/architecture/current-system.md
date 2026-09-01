@@ -64,8 +64,8 @@ Las rutas y contratos operativos están en [docs/api.md](../../docs/api.md).
 
 - No es una arquitectura hexagonal ni DDD formal: es una arquitectura en capas. La evolución debe ser incremental, empezando por acceso y progreso.
 - El seed reutiliza usuarios, cursos activos y accesos existentes, por lo que es idempotente en ejecuciones secuenciales. Aún no tiene una restricción única de base de datos para nombres de curso ni resuelve carreras de escrituras concurrentes.
-- La CI usa `prisma db push`; no cumple la política objetivo de migraciones versionadas.
-- Estado objetivo de arranque: esperar PostgreSQL, comprobar/aplicar migraciones pendientes y ejecutar un seed idempotente sólo cuando la base esté vacía. Esto **no está implementado aún**.
+- No hay CI activa; al reintroducirla debe usar `prisma migrate deploy`, nunca `prisma db push`.
+- El arranque espera PostgreSQL, ejecuta `prisma migrate deploy` y usa el seed idempotente sólo cuando no hay usuarios ni cursos. Falta validarlo dentro de Compose y cubrir la garantía de concurrencia del seed.
 - La colección Postman versionada vive en `docs/postman/` y debe evolucionar junto a cada cambio de API.
 
 `docs/superpowers/` conserva diseños y planes históricos; no es contrato vigente.

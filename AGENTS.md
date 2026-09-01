@@ -13,7 +13,7 @@ Las instrucciones de `frontend/AGENTS.md` y `backend/AGENTS.md` complementan est
 - `backend/prisma/`: esquema, migraciones, generación de cliente y datos de semilla.
 - `context/`: arquitectura, decisiones, convenciones y especificaciones del proyecto.
 - `docs/`: contratos de API y esquema, además de diseños y planes históricos en `docs/superpowers/`.
-- `.github/workflows/ci.yml`: validación continua para las ramas `main` y `develop`.
+- No hay workflow de CI activo; cualquier workflow futuro debe validar migraciones con `prisma migrate deploy`, nunca con `prisma db push`.
 
 No añadas otro `AGENTS.md` salvo que una regla sea específica de un subárbol y no aplique al resto del repositorio.
 

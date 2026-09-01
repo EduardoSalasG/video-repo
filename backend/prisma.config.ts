@@ -1,7 +1,13 @@
-import { defineConfig } from 'prisma/config'
+import 'dotenv/config';
+import { defineConfig, env } from 'prisma/config';
 
 export default defineConfig({
+  schema: 'prisma/schema.prisma',
   datasource: {
-    url: "postgresql://postgres:admin@localhost:5433/video_repo"
-  }
-})
+    url: env('DATABASE_URL'),
+  },
+  migrations: {
+    path: 'prisma/migrations',
+    seed: 'npm run seed',
+  },
+});
