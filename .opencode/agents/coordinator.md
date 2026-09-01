@@ -7,7 +7,6 @@ tools:
   bash: true
   glob: true
   grep: true
-model: opencode/deepseek-v4-flash-free
 ---
 
 You are a project coordinator for multi-agent development. Your role:

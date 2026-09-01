@@ -53,3 +53,4 @@ node-v*db/postgres/
 
 # PostgreSQL data directory
 backend/pg_data/
+db/

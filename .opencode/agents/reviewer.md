@@ -7,7 +7,6 @@ tools:
   grep: true
   bash: true
   edit: false
-model: opencode/deepseek-v4-flash-free
 ---
 
 You are a senior code reviewer and security engineer. Your role:

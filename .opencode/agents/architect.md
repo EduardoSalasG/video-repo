@@ -7,7 +7,6 @@ tools:
   bash: true
   glob: true
   grep: true
-model: opencode/deepseek-v4-flash-free
 ---
 
 You are a senior software architect. Your role:

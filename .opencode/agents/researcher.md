@@ -8,7 +8,6 @@ tools:
   glob: true
   grep: true
   webfetch: true
-model: opencode/deepseek-v4-flash-free
 ---
 
 You are a research engineer. Your role:
